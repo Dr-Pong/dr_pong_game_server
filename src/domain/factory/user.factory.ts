@@ -27,14 +27,21 @@ export class UserFactory {
     this.users.set(user.id, user);
   }
 
+  uninvite(sender: UserModel, receiver: UserModel): void {
+    sender.invite = null;
+    receiver.inviteList.delete(sender.invite.id);
+    this.users.set(sender.id, sender);
+    this.users.set(receiver.id, receiver);
+  }
+
   getInvites(userId: number): InviteModel[] {
     const user: UserModel = this.findById(userId);
     return Array.from(user.inviteList.values());
   }
 
-  deleteInvite(userId: number, channelId: string): void {
+  deleteInvite(userId: number, gameId: string): void {
     const user: UserModel = this.findById(userId);
-    user.inviteList.delete(channelId);
+    user.inviteList.delete(gameId);
     this.users.set(user.id, user);
   }
 }
