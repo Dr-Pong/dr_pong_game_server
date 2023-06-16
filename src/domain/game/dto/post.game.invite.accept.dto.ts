@@ -1,4 +1,4 @@
 export class PostGameInviteAcceptDto {
   userId: number;
-  gameId: number;
+  inviteId: string;
 }

@@ -7,13 +7,12 @@ import { DeleteGameInviteRejectDto } from './dto/delete.game.invite.reject.dto';
 import { UserFactory } from '../factory/user.factory';
 import { InviteModel } from '../factory/model/invite.model';
 import { USERSTATUS_IN_GAME } from 'src/global/type/type.user.status';
-import { UserModel } from '../factory/model/user.model';
+import { GameModel } from '../factory/model/game.model';
 
 @Injectable()
 export class GameService {
   constructor(private readonly userFactory: UserFactory) {}
 
-  @Transactional({ isolationLevel: IsolationLevel.SERIALIZABLE })
   async postGameInvite(postDto: PostGameInviteDto): Promise<void> {
     const { sender, receiver, mode } = postDto;
 
@@ -34,7 +33,6 @@ export class GameService {
     this.userFactory.invite(receivedUser.id, invite);
   }
 
-  @Transactional({ isolationLevel: IsolationLevel.SERIALIZABLE })
   async deleteGameInvite(deleteDto: DeleteGameInviteDto): Promise<void> {
     const { sender, receiver } = deleteDto;
     const sendUser = this.userFactory.findById(sender);
@@ -44,11 +42,31 @@ export class GameService {
     }
   }
 
-  @Transactional({ isolationLevel: IsolationLevel.SERIALIZABLE })
-  async postGameInviteAccept(postDto: PostGameInviteAcceptDto): Promise<void> {}
+  async postGameInviteAccept(postDto: PostGameInviteAcceptDto): Promise<void> {
+    const { userId, inviteId } = postDto;
+    const user = this.userFactory.findById(userId);
+    const invitation = Array.from(user.inviteList.values()).find((invite) => {
+      return invite.id === inviteId;
+    });
+    if (!invitation) {
+      throw new BadRequestException('invalid invite');
+    }
 
-  @Transactional({ isolationLevel: IsolationLevel.SERIALIZABLE })
+    const game: GameModel = new GameModel(invitation.id, invitation.mode);
+  }
+
   async deleteGameInviteReject(
     deleteDto: DeleteGameInviteRejectDto,
-  ): Promise<void> {}
+  ): Promise<void> {
+    const { userId, inviteId } = deleteDto;
+    const user = this.userFactory.findById(userId);
+    const invitation = Array.from(user.inviteList.values()).find((invite) => {
+      return invite.id === inviteId;
+    });
+    if (!invitation) {
+      throw new BadRequestException('invalid invite');
+    }
+
+    this.userFactory.uninvite(user, user);
+  }
 }
