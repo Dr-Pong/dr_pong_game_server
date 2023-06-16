@@ -38,6 +38,8 @@ export class QueueFactory {
           this.removeUserFromQueue(currentPlayer);
           this.removeUserFromQueue(opponentPlayer);
 
+          // 매칭된 플레이어들을 제거했으므로
+          // 현재 인덱스를 그대로 유지하여 다음 플레이어와 매칭하도록 함
           currentIndex--;
           break;
         }
