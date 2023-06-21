@@ -6,7 +6,7 @@ export class GameModel {
   mode: GameMode;
   createdAt: Date;
 
-  constructor(id: string, mode: GameMode) {
+  constructor(mode: GameMode) {
     this.id = uuid();
     this.mode = mode;
     this.createdAt = new Date();
