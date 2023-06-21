@@ -37,9 +37,9 @@ export class UserFactory {
   }
 
   deleteInvite(senderId: number, receiverId: number): void {
-    const senderModel: UserModel = this.findById(senderId);
-    const receiverModel: UserModel = this.findById(receiverId);
-    senderModel.invite = null;
-    receiverModel.inviteList.delete(senderModel.invite.id);
+    const sender: UserModel = this.findById(senderId);
+    const receiver: UserModel = this.findById(receiverId);
+    sender.invite = null;
+    receiver.inviteList.delete(sender.invite.id);
   }
 }
