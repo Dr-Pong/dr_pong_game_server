@@ -1,13 +1,9 @@
-import { GameMode } from 'src/global/type/type.game.mode';
-
 export class DeleteGameInviteDto {
-  sender: number;
-  receiver: number;
-  mode: GameMode;
+  senderId: number;
+  receiverId: number;
 
-  constructor(sender: number, receiver: number, mode: GameMode) {
-    this.sender = sender;
-    this.receiver = receiver;
-    this.mode = mode;
+  constructor(sender: number, receiver: number) {
+    this.senderId = sender;
+    this.receiverId = receiver;
   }
 }
