@@ -5,9 +5,9 @@ export class PostGameInviteDto {
   receiverId: number;
   mode: GameMode;
 
-  constructor(sender: number, receiver: number, mode: GameMode) {
-    this.senderId = sender;
-    this.receiverId = receiver;
+  constructor(senderId: number, receiverId: number, mode: GameMode) {
+    this.senderId = senderId;
+    this.receiverId = receiverId;
     this.mode = mode;
   }
 }
