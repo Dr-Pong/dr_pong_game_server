@@ -11,6 +11,12 @@ export class UserFactory {
     return this.users.get(id);
   }
 
+  findByNickname(nickname: string): UserModel {
+    return Array.from(this.users.values()).find(
+      (user: UserModel) => user.nickname === nickname,
+    );
+  }
+
   create(user: UserModel): void {
     this.users.set(user.id, user);
   }
@@ -18,13 +24,11 @@ export class UserFactory {
   setStatus(userId: number, status: UserStatusType): void {
     const user: UserModel = this.findById(userId);
     user.status = status;
-    this.users.set(user.id, user);
   }
 
   invite(userId: number, invite: InviteModel): void {
     const user: UserModel = this.findById(userId);
     user.invite = invite;
-    this.users.set(user.id, user);
   }
 
   getInvites(userId: number): InviteModel[] {
@@ -32,9 +36,10 @@ export class UserFactory {
     return Array.from(user.inviteList.values());
   }
 
-  deleteInvite(userId: number, channelId: string): void {
-    const user: UserModel = this.findById(userId);
-    user.inviteList.delete(channelId);
-    this.users.set(user.id, user);
+  deleteInvite(senderId: number, receiverId: number): void {
+    const sender: UserModel = this.findById(senderId);
+    const receiver: UserModel = this.findById(receiverId);
+    sender.invite = null;
+    receiver.inviteList.delete(sender.invite.id);
   }
 }

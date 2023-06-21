@@ -1,6 +1,6 @@
 import { Socket } from 'socket.io';
 import {
-  USERSTATUS_OFFLINE,
+  USERSTATUS_NOT_IN_GAME,
   UserStatusType,
 } from 'src/global/type/type.user.status';
 import { InviteModel } from './invite.model';
@@ -32,6 +32,6 @@ export class UserModel {
     this.socket = socket;
     this.invite = null;
     this.inviteList = new Map();
-    this.status = USERSTATUS_OFFLINE;
+    this.status = USERSTATUS_NOT_IN_GAME;
   }
 }
