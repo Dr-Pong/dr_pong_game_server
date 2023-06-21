@@ -36,9 +36,7 @@ export class GameService {
     const { senderId: sender, receiverId: receiver } = deleteDto;
     const sendUser = this.userFactory.findById(sender);
     const receivedUser = this.userFactory.findById(receiver);
-    if (receivedUser.invite.senderId === sender) {
-      this.userFactory.deleteInvite(sendUser.id, receivedUser.id);
-    }
+    this.userFactory.deleteInvite(sendUser.id, receivedUser.id);
   }
 
   async postGameInviteAccept(postDto: PostGameInviteAcceptDto): Promise<void> {
