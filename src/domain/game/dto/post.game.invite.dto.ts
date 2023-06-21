@@ -1,13 +1,13 @@
 import { GameMode } from 'src/global/type/type.game.mode';
 
 export class PostGameInviteDto {
-  sender: number;
-  receiver: number;
+  senderId: number;
+  receiverId: number;
   mode: GameMode;
 
   constructor(sender: number, receiver: number, mode: GameMode) {
-    this.sender = sender;
-    this.receiver = receiver;
+    this.senderId = sender;
+    this.receiverId = receiver;
     this.mode = mode;
   }
 }
