@@ -31,18 +31,15 @@ export class UserFactory {
     user.invite = invite;
   }
 
-  uninvite(sender: UserModel, receiver: UserModel): void {
-    sender.invite = null;
-    receiver.inviteList.delete(sender.invite.id);
-  }
-
   getInvites(userId: number): InviteModel[] {
     const user: UserModel = this.findById(userId);
     return Array.from(user.inviteList.values());
   }
 
-  deleteInvite(userId: number, gameId: string): void {
-    const user: UserModel = this.findById(userId);
-    user.inviteList.delete(gameId);
+  deleteInvite(senderId: number, receiverId: number): void {
+    const senderModel: UserModel = this.findById(senderId);
+    const receiverModel: UserModel = this.findById(receiverId);
+    senderModel.invite = null;
+    receiverModel.inviteList.delete(senderModel.invite.id);
   }
 }
