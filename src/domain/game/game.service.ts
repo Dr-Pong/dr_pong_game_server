@@ -13,7 +13,7 @@ export class GameService {
   constructor(private readonly userFactory: UserFactory) {}
 
   async postGameInvite(postDto: PostGameInviteDto): Promise<void> {
-    const { sender, receiver, mode } = postDto;
+    const { senderId: sender, receiverId: receiver, mode } = postDto;
 
     const sendUser = this.userFactory.findById(sender);
     const receivedUser = this.userFactory.findById(receiver);
@@ -33,39 +33,36 @@ export class GameService {
   }
 
   async deleteGameInvite(deleteDto: DeleteGameInviteDto): Promise<void> {
-    const { sender, receiver } = deleteDto;
+    const { senderId: sender, receiverId: receiver } = deleteDto;
     const sendUser = this.userFactory.findById(sender);
     const receivedUser = this.userFactory.findById(receiver);
     if (receivedUser.invite.senderId === sender) {
-      this.userFactory.uninvite(sendUser, receivedUser);
+      this.userFactory.deleteInvite(sendUser.id, receivedUser.id);
     }
   }
 
   async postGameInviteAccept(postDto: PostGameInviteAcceptDto): Promise<void> {
     const { userId, inviteId } = postDto;
     const user = this.userFactory.findById(userId);
-    const invitation = Array.from(user.inviteList.values()).find((invite) => {
-      return invite.id === inviteId;
-    });
+    const invitation = user.inviteList.get(inviteId);
     if (!invitation) {
       throw new BadRequestException('invalid invite');
     }
 
-    const game: GameModel = new GameModel(invitation.id, invitation.mode);
+    const game: GameModel = new GameModel(invitation.mode);
   }
 
   async deleteGameInviteReject(
     deleteDto: DeleteGameInviteRejectDto,
   ): Promise<void> {
     const { userId, inviteId } = deleteDto;
-    const user = this.userFactory.findById(userId);
-    const invitation = Array.from(user.inviteList.values()).find((invite) => {
-      return invite.id === inviteId;
-    });
+    const receiver = this.userFactory.findById(userId);
+    const invitation = receiver.inviteList.get(inviteId);
     if (!invitation) {
       throw new BadRequestException('invalid invite');
     }
+    const sender = this.userFactory.findById(invitation.senderId);
 
-    this.userFactory.uninvite(user, user);
+    this.userFactory.deleteInvite(sender.id, receiver.id);
   }
 }
