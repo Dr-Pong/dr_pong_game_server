@@ -11,6 +11,12 @@ export class UserFactory {
     return this.users.get(id);
   }
 
+  findByNickname(nickname: string): UserModel {
+    return Array.from(this.users.values()).find(
+      (user: UserModel) => user.nickname === nickname,
+    );
+  }
+
   create(user: UserModel): void {
     this.users.set(user.id, user);
   }
