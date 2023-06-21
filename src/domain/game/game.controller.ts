@@ -1,4 +1,4 @@
-import { Controller, Delete, Param, Patch, Post } from '@nestjs/common';
+import { Controller, Delete, Param, Post } from '@nestjs/common';
 import { GameService } from './game.service';
 import { Requestor } from '../auth/jwt/auth.requestor.decorator';
 import { UserIdCardDto } from '../auth/jwt/auth.user.id-card.dto';
@@ -28,15 +28,14 @@ export class GameController {
     await this.gameService.postGameInvite(postDto);
   }
 
-  @Delete('/invitation/:nickname/:mode')
+  @Delete('/invitation/:nickname')
   async gameInviteDelete(
     @Requestor() requestor: UserIdCardDto,
     @Param('nickname') nickname: string,
-    @Param('mode') mode: GameMode,
   ): Promise<void> {
     const { id: userId } = requestor;
     const { id: targetId } = this.userFactory.findByNickname(nickname);
-    const deleteDto = new DeleteGameInviteDto(userId, targetId, mode);
+    const deleteDto = new DeleteGameInviteDto(userId, targetId);
     await this.gameService.deleteGameInvite(deleteDto);
   }
 
