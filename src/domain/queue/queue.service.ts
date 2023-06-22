@@ -46,7 +46,7 @@ export class QueueService {
     } else {
       this.normalQueue.push(userId);
     }
-    if (this.bulletQueue.length == 2 || this.normalQueue.length == 2) {
+    if (this.bulletQueue.length === 2 || this.normalQueue.length === 2) {
       const game: GameModel = new GameModel(mode);
     }
   }
