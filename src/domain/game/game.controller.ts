@@ -30,15 +30,11 @@ export class GameController {
     await this.gameService.postGameInvite(postDto);
   }
 
-  @Delete('/invitation/nickname/:nickname')
+  @Delete('/invitation')
   @UseGuards(AuthGuard('jwt'))
-  async gameInviteDelete(
-    @Requestor() requestor: UserIdCardDto,
-    @Param('nickname') nickname: string,
-  ): Promise<void> {
+  async gameInviteDelete(@Requestor() requestor: UserIdCardDto): Promise<void> {
     const { id: userId } = requestor;
-    const { id: targetId } = this.userFactory.findByNickname(nickname);
-    const deleteDto = new DeleteGameInviteDto(userId, targetId);
+    const deleteDto = new DeleteGameInviteDto(userId);
     await this.gameService.deleteGameInvite(deleteDto);
   }
 
@@ -53,7 +49,7 @@ export class GameController {
     await this.gameService.postGameInviteAccept(postDto);
   }
 
-  @Delete('/invitation/id/:id')
+  @Delete('/invitation/:id')
   @UseGuards(AuthGuard('jwt'))
   async gameInviteReject(
     @Requestor() requestor: UserIdCardDto,

@@ -41,9 +41,9 @@ export class GameService {
   }
 
   async deleteGameInvite(deleteDto: DeleteGameInviteDto): Promise<void> {
-    const { senderId: sender, receiverId: receiver } = deleteDto;
+    const { senderId: sender } = deleteDto;
     const sendUser = this.userFactory.findById(sender);
-    const receivedUser = this.userFactory.findById(receiver);
+    const receivedUser = this.userFactory.findById(sendUser.invite.receiverId);
     this.userFactory.deleteInvite(sendUser.id, receivedUser.id);
   }
 
@@ -54,12 +54,8 @@ export class GameService {
     if (!invitation) {
       throw new BadRequestException('invalid invite');
     }
-    const deleteDto: DeleteGameInviteDto = new DeleteGameInviteDto(
-      invitation.senderId,
-      invitation.receiverId,
-    );
 
-    this.deleteGameInvite(deleteDto);
+    this.deleteGameInvite({ senderId: invitation.senderId });
     const game: GameModel = new GameModel(invitation.mode);
   }
 

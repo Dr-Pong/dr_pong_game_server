@@ -136,18 +136,14 @@ describe('GameController', () => {
     });
   });
   describe('[DELETE]]', () => {
-    describe('games/invitation/:nickname', () => {
+    describe('games/invitation', () => {
       it('일반 게임 초대 취소 성공', async () => {
         const user: UserModel = await userData.createUser('user');
         const target: UserModel = await userData.createUser('target');
         await gameData.createGameInvite(user, target);
         const token = await userData.giveTokenToUser(user);
 
-        const response = await req(
-          token,
-          'DELETE',
-          `/games/invitation/nickname/${target.nickname}`,
-        );
+        const response = await req(token, 'DELETE', `/games/invitation`);
 
         expect(response.status).toBe(200);
       });
@@ -162,7 +158,7 @@ describe('GameController', () => {
         const response = await req(
           token,
           'DELETE',
-          `/games/invitation/id/${user.invite.id}`,
+          `/games/invitation/${user.invite.id}`,
         );
 
         expect(response.status).toBe(200);
