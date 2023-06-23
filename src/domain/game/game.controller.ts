@@ -1,4 +1,4 @@
-import { Controller, Delete, Param, Post } from '@nestjs/common';
+import { Controller, Delete, Param, Post, UseGuards } from '@nestjs/common';
 import { GameService } from './game.service';
 import { Requestor } from '../auth/jwt/auth.requestor.decorator';
 import { UserIdCardDto } from '../auth/jwt/auth.user.id-card.dto';
@@ -8,6 +8,7 @@ import { PostGameInviteDto } from './dto/post.game.invite.dto';
 import { DeleteGameInviteDto } from './dto/delete.game.invite.dto';
 import { PostGameInviteAcceptDto } from './dto/post.game.invite.accept.dto';
 import { DeleteGameInviteRejectDto } from './dto/delete.game.invite.reject.dto';
+import { AuthGuard } from '@nestjs/passport';
 
 @Controller('/games')
 export class GameController {
@@ -17,6 +18,7 @@ export class GameController {
   ) {}
 
   @Post('/invitation/:nickname/:mode')
+  @UseGuards(AuthGuard('jwt'))
   async gameInvitePost(
     @Requestor() requestor: UserIdCardDto,
     @Param('nickname') nickname: string,
@@ -28,7 +30,8 @@ export class GameController {
     await this.gameService.postGameInvite(postDto);
   }
 
-  @Delete('/invitation/:nickname')
+  @Delete('/invitation/nickname/:nickname')
+  @UseGuards(AuthGuard('jwt'))
   async gameInviteDelete(
     @Requestor() requestor: UserIdCardDto,
     @Param('nickname') nickname: string,
@@ -40,6 +43,7 @@ export class GameController {
   }
 
   @Post('/invitation/:id')
+  @UseGuards(AuthGuard('jwt'))
   async gameInviteAccept(
     @Requestor() requestor: UserIdCardDto,
     @Param('id') id: string,
@@ -49,7 +53,8 @@ export class GameController {
     await this.gameService.postGameInviteAccept(postDto);
   }
 
-  @Delete('/invitation/:id')
+  @Delete('/invitation/id/:id')
+  @UseGuards(AuthGuard('jwt'))
   async gameInviteReject(
     @Requestor() requestor: UserIdCardDto,
     @Param('id') id: string,
