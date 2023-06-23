@@ -19,9 +19,9 @@ export class GameService {
     const sendUser: UserModel = this.userFactory.findById(sender);
     const receivedUser: UserModel = this.userFactory.findById(receiver);
 
-    const invite = Array.from(receivedUser.inviteList.values()).find(
-      (invite) => invite.senderId === sender,
-    );
+    const invite: InviteModel = Array.from(
+      receivedUser.inviteList.values(),
+    ).find((invite) => invite.senderId === sender);
 
     if (invite) {
       throw new BadRequestException('already invited');
