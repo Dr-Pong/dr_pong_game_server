@@ -18,7 +18,9 @@ export class GameService {
 
     const sendUser: UserModel = this.userFactory.findById(sender);
     const receivedUser: UserModel = this.userFactory.findById(receiver);
-
+    if (receivedUser === sendUser) {
+      throw new BadRequestException('invalid user');
+    }
     const invite: InviteModel = Array.from(
       receivedUser.inviteList.values(),
     ).find((invite) => invite.senderId === sender);
