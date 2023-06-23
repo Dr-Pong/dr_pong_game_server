@@ -10,26 +10,21 @@ export class UserModel {
   id: number;
   nickname: string;
   ladderPoint: number;
-  socket: Socket;
+  socket: Map<string, Socket>;
   invite: InviteModel;
   inviteList: Map<string, InviteModel>;
   status: UserStatusType;
 
   static fromEntity(entity: User): UserModel {
     const { id, nickname, ladderPoint } = entity;
-    return new UserModel(id, nickname, ladderPoint, null);
+    return new UserModel(id, nickname, ladderPoint);
   }
 
-  constructor(
-    id: number,
-    nickname: string,
-    ladderPoint: number,
-    socket: Socket,
-  ) {
+  constructor(id: number, nickname: string, ladderPoint: number) {
     this.id = id;
     this.nickname = nickname;
     this.ladderPoint = ladderPoint;
-    this.socket = socket;
+    this.socket = new Map();
     this.invite = null;
     this.inviteList = new Map();
     this.status = USERSTATUS_NOT_IN_GAME;
