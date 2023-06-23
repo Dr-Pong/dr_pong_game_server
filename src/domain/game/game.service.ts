@@ -14,13 +14,30 @@ export class GameService {
   constructor(private readonly userFactory: UserFactory) {}
 
   async postGameInvite(postDto: PostGameInviteDto): Promise<void> {
+    this.validateGameInvite(postDto);
+
     const { senderId: sender, receiverId: receiver, mode } = postDto;
+    const sendUser: UserModel = this.userFactory.findById(sender);
+    const receivedUser: UserModel = this.userFactory.findById(receiver);
+
+    const newInvite: InviteModel = new InviteModel(
+      sendUser.id,
+      receivedUser.id,
+      mode,
+    );
+    this.userFactory.invite(sendUser.id, receivedUser.id, newInvite);
+  }
+
+  private validateGameInvite(postDto: PostGameInviteDto) {
+    const { senderId: sender, receiverId: receiver } = postDto;
 
     const sendUser: UserModel = this.userFactory.findById(sender);
     const receivedUser: UserModel = this.userFactory.findById(receiver);
+
     if (receivedUser === sendUser) {
       throw new BadRequestException('invalid user');
     }
+
     const invite: InviteModel = Array.from(
       receivedUser.inviteList.values(),
     ).find((invite) => invite.senderId === sender);
@@ -30,14 +47,6 @@ export class GameService {
     } else if (receivedUser.status === USERSTATUS_IN_GAME) {
       throw new BadRequestException('already in game');
     }
-
-    const newInvite: InviteModel = new InviteModel(
-      sendUser.id,
-      receivedUser.id,
-      mode,
-    );
-
-    this.userFactory.invite(sendUser.id, receivedUser.id, newInvite);
   }
 
   async deleteGameInvite(deleteDto: DeleteGameInviteDto): Promise<void> {
