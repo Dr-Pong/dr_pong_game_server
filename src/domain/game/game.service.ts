@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PostGameInviteDto } from './dto/post.game.invite.dto';
 import { DeleteGameInviteDto } from './dto/delete.game.invite.dto';
 import { PostGameInviteAcceptDto } from './dto/post.game.invite.accept.dto';
