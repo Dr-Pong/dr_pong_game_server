@@ -124,8 +124,12 @@ describe('GameService', () => {
 
       await service.deleteGameInvite(deleteDto);
       const savedUserFt: UserModel = userFactory.findById(userData.users[0].id);
+      const receivedUserFt: UserModel = userFactory.findById(
+        userData.users[1].id,
+      );
 
       expect(savedUserFt.invite).toBeNull();
+      expect(receivedUserFt.inviteList.size).toBe(0);
     });
   });
   describe('게임 초대 수락', () => {
