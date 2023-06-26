@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { UserFactory } from '../factory/user.factory';
 import { QueueFactory } from '../factory/queue.factory';
 import { PostQueueDto } from './dto/post.queue.dto';
@@ -7,6 +7,7 @@ import { GAMETYPE_LADDER, GameType } from 'src/global/type/type.game.type';
 import { GAMEMODE_BULLET, GameMode } from 'src/global/type/type.game.mode';
 import { GameModel } from '../factory/model/game.model';
 import { DeleteQueueDto } from './dto/delete.queue.dto';
+import { checkUserExist } from './validation/erros.queue';
 
 @Injectable()
 export class QueueService {
@@ -22,10 +23,7 @@ export class QueueService {
     const { userId, mode, type } = postDto;
     const user = this.userFactory.findById(userId);
 
-    if (!user) {
-      throw new BadRequestException('User not found');
-    }
-
+    checkUserExist(user);
     const release = await this.mutex.acquire();
 
     try {
@@ -59,9 +57,7 @@ export class QueueService {
     const { userId } = deleteDto;
     const user = this.userFactory.findById(userId);
 
-    if (!user) {
-      throw new BadRequestException('User not found');
-    }
+    checkUserExist(user);
 
     const release = await this.mutex.acquire();
 
