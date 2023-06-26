@@ -13,6 +13,7 @@ import {
   validateInvite,
   validateUser,
 } from './validation/errors.game';
+import { GameInviteAcceptResponseDto } from './dto/game.invite.accept.response.dto';
 
 @Injectable()
 export class GameService {
@@ -40,13 +41,16 @@ export class GameService {
     this.userFactory.deleteInvite(sendUser.id, receivedUser.id);
   }
 
-  async postGameInviteAccept(postDto: PostGameInviteAcceptDto): Promise<void> {
+  async postGameInviteAccept(
+    postDto: PostGameInviteAcceptDto,
+  ): Promise<GameInviteAcceptResponseDto> {
     const { userId, inviteId } = postDto;
     const user = this.userFactory.findById(userId);
     const invitation = user.inviteList.get(inviteId);
     validateInvite(invitation);
     this.deleteGameInvite({ senderId: invitation.senderId });
     const game: GameModel = new GameModel(invitation.mode);
+    return new GameInviteAcceptResponseDto(game.id);
   }
 
   async deleteGameInviteReject(
