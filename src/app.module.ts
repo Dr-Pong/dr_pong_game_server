@@ -7,6 +7,7 @@ import { typeORMConfig } from './configs/typeorm.config';
 import { addTransactionalDataSource } from 'typeorm-transactional';
 import { DataSource } from 'typeorm';
 import { FactoryModule } from './domain/factory/factory.module';
+import { GameModule } from './domain/game/game.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { FactoryModule } from './domain/factory/factory.module';
     }),
     AuthModule,
     FactoryModule,
+    GameModule,
   ],
   controllers: [AppController],
   providers: [AppService],
