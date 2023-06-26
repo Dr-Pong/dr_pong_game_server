@@ -19,11 +19,11 @@ export class GameService {
   constructor(private readonly userFactory: UserFactory) {}
 
   async postGameInvite(postDto: PostGameInviteDto): Promise<void> {
-    const { senderId: sender, receiverId: receiver, mode } = postDto;
-    const sendUser: UserModel = this.userFactory.findById(sender);
-    const receivedUser: UserModel = this.userFactory.findById(receiver);
+    const { senderId, receiverId, mode } = postDto;
+    const sendUser: UserModel = this.userFactory.findById(senderId);
+    const receivedUser: UserModel = this.userFactory.findById(receiverId);
     validateUser(sendUser, receivedUser);
-    checkAlreadyInvited(receivedUser, sender);
+    checkAlreadyInvited(receivedUser, senderId);
     checkAlreadyInGame(receivedUser);
     const newInvite: InviteModel = new InviteModel(
       sendUser.id,
@@ -34,8 +34,8 @@ export class GameService {
   }
 
   async deleteGameInvite(deleteDto: DeleteGameInviteDto): Promise<void> {
-    const { senderId: sender } = deleteDto;
-    const sendUser = this.userFactory.findById(sender);
+    const { senderId } = deleteDto;
+    const sendUser = this.userFactory.findById(senderId);
     const receivedUser = this.userFactory.findById(sendUser.invite.receiverId);
     this.userFactory.deleteInvite(sendUser.id, receivedUser.id);
   }
