@@ -7,6 +7,9 @@ export function validateUser(sendUser: UserModel, receivedUser: UserModel) {
   if (receivedUser === sendUser) {
     throw new BadRequestException('invalid user');
   }
+  if (!sendUser || !receivedUser) {
+    throw new BadRequestException('invalid user');
+  }
 }
 
 export function checkAlreadyInvited(receivedUser: UserModel, senderId: number) {
