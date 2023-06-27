@@ -26,9 +26,11 @@ export class UserFactory {
     user.status = status;
   }
 
-  invite(userId: number, invite: InviteModel): void {
-    const user: UserModel = this.findById(userId);
-    user.invite = invite;
+  invite(senderId: number, receiverId: number, invite: InviteModel): void {
+    const sender: UserModel = this.findById(senderId);
+    const receiver: UserModel = this.findById(receiverId);
+    receiver.inviteList.set(invite.id, invite);
+    sender.invite = invite;
   }
 
   getInvites(userId: number): InviteModel[] {
@@ -39,7 +41,7 @@ export class UserFactory {
   deleteInvite(senderId: number, receiverId: number): void {
     const sender: UserModel = this.findById(senderId);
     const receiver: UserModel = this.findById(receiverId);
-    sender.invite = null;
     receiver.inviteList.delete(sender.invite.id);
+    sender.invite = null;
   }
 }
