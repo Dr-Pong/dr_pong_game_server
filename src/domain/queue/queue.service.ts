@@ -31,6 +31,18 @@ export class QueueService {
     }
   }
 
+  async deleteQueue(deleteDto: DeleteQueueDto): Promise<void> {
+    const { userId } = deleteDto;
+
+    const release = await this.mutex.acquire();
+
+    try {
+      this.queueFactory.delete(userId);
+    } finally {
+      release();
+    }
+  }
+
   @Cron('5 * * * * *')
   async matching(): Promise<void> {
     const release = await this.mutex.acquire();
@@ -55,18 +67,6 @@ export class QueueService {
       const newGame: GameModel = this.queueFactory.ladderGameMatch();
       if (!newGame) break;
       this.gameGateway.startGame(newGame);
-    }
-  }
-
-  async deleteQueue(deleteDto: DeleteQueueDto): Promise<void> {
-    const { userId } = deleteDto;
-
-    const release = await this.mutex.acquire();
-
-    try {
-      this.queueFactory.delete(userId);
-    } finally {
-      release();
     }
   }
 }
