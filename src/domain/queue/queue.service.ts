@@ -3,11 +3,10 @@ import { UserFactory } from '../factory/user.factory';
 import { QueueFactory } from '../factory/queue.factory';
 import { PostQueueDto } from './dto/post.queue.dto';
 import { Mutex } from 'async-mutex';
-import { GAMETYPE_LADDER, GameType } from 'src/global/type/type.game.type';
-import { GAMEMODE_BULLET, GameMode } from 'src/global/type/type.game.mode';
+import { GAMETYPE_LADDER } from 'src/global/type/type.game.type';
 import { GameModel } from '../factory/model/game.model';
 import { DeleteQueueDto } from './dto/delete.queue.dto';
-import { checkUserExist } from './validation/erros.queue';
+import { Cron } from '@nestjs/schedule';
 
 @Injectable()
 export class QueueService {
@@ -16,61 +15,58 @@ export class QueueService {
     private readonly queueFactory: QueueFactory,
   ) {}
   private mutex: Mutex = new Mutex();
-  private normalQueue: number[] = [];
-  private bulletQueue: number[] = [];
 
   async postQueue(postDto: PostQueueDto): Promise<void> {
     const { userId, mode, type } = postDto;
-    const user = this.userFactory.findById(userId);
-
-    checkUserExist(user);
     const release = await this.mutex.acquire();
 
     try {
-      this.matching(userId, type, mode);
+      if (type === GAMETYPE_LADDER) {
+        this.queueFactory.addLadderQueue(userId);
+      } else {
+        this.queueFactory.addNormalQueue(userId, mode);
+      }
     } finally {
       release();
     }
   }
 
-  private matching(userId: number, type: GameType, mode: GameMode): void {
-    if (type === GAMETYPE_LADDER) {
-      this.queueFactory.addLadderQueue(userId);
-      this.ladderMatchingAlgorhythem();
-    }
-
-    if (mode === GAMEMODE_BULLET) {
-      this.bulletQueue.push(userId);
-    } else {
-      this.normalQueue.push(userId);
-    }
-    if (this.bulletQueue.length === 2 || this.normalQueue.length === 2) {
-      const game: GameModel = new GameModel(mode);
+  @Cron('5 * * * * *')
+  async matching(): Promise<void> {
+    const release = await this.mutex.acquire();
+    try {
+      this.processNormalQueue();
+      await this.processLadderQueue();
+    } finally {
+      release();
     }
   }
 
-  private async ladderMatchingAlgorhythem(): Promise<void> {
-    //매칭 ladder 로직
+  private processNormalQueue(): void {
+    while (true) {
+      const newGame: GameModel = this.queueFactory.normalGameMatch();
+      if (!newGame) break;
+      this.gameGateway.startGame(newGame);
+    }
+  }
+
+  private async processLadderQueue(): Promise<void> {
+    while (true) {
+      const newGame: GameModel = this.queueFactory.ladderGameMatch();
+      if (!newGame) break;
+      this.gameGateway.startGame(newGame);
+    }
   }
 
   async deleteQueue(deleteDto: DeleteQueueDto): Promise<void> {
     const { userId } = deleteDto;
-    const user = this.userFactory.findById(userId);
-
-    checkUserExist(user);
 
     const release = await this.mutex.acquire();
 
     try {
-      this.deleteMatching(userId);
+      this.queueFactory.delete(userId);
     } finally {
       release();
     }
-  }
-
-  private deleteMatching(userId: number): void {
-    this.queueFactory.delete(userId);
-    this.normalQueue = this.normalQueue.filter((id) => id !== userId);
-    this.bulletQueue = this.bulletQueue.filter((id) => id !== userId);
   }
 }
