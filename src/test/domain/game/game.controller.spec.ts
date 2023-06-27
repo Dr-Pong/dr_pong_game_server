@@ -39,7 +39,7 @@ describe('GameController', () => {
   });
 
   describe('[POST]]', () => {
-    describe('games/invitation/:nickname/:mode', () => {
+    describe('games/invitation/:nickname', () => {
       it('일반 게임 초대 성공', async () => {
         const user: UserModel = await userData.createUser('user');
         const target: UserModel = await userData.createUser('target');
@@ -49,7 +49,8 @@ describe('GameController', () => {
         const response = await req(
           token,
           'POST',
-          `/games/invitation/${target.nickname}/${mode}`,
+          `/games/invitation/${target.nickname}`,
+          { mode },
         );
 
         expect(response.status).toBe(201);
@@ -60,17 +61,15 @@ describe('GameController', () => {
         const target: UserModel = await userData.createUser('target');
         const token = await userData.giveTokenToUser(user);
         const mode: GameMode = GAMEMODE_CLASSIC;
-
-        await req(
-          token,
-          'POST',
-          `/games/invitation/${target.nickname}/${mode}`,
-        );
+        await req(token, 'POST', `/games/invitation/${target.nickname}`, {
+          mode,
+        });
 
         const response = await req(
           token,
           'POST',
-          `/games/invitation/${target.nickname}/${mode}`,
+          `/games/invitation/${target.nickname}`,
+          { mode },
         );
 
         expect(response.status).toBe(400);
@@ -84,12 +83,15 @@ describe('GameController', () => {
         const response = await req(
           token,
           'POST',
-          `/games/invitation/${user.nickname}/${mode}`,
+          `/games/invitation/${user.nickname}`,
+          { mode },
         );
 
         expect(response.status).toBe(400);
       });
     });
+  });
+  describe('[PATCH]]', () => {
     describe('games/invitation/:id', () => {
       it('일반 게임 초대 수락 성공', async () => {
         const user: UserModel = await userData.createUser('user');
@@ -99,11 +101,11 @@ describe('GameController', () => {
 
         const response = await req(
           token,
-          'POST',
+          'PATCH',
           `/games/invitation/${user.invite.id}`,
         );
 
-        expect(response.status).toBe(201);
+        expect(response.status).toBe(200);
       });
 
       it('일반 게임 초대 수락 실패 - 초대가 없는 유저', async () => {
@@ -112,7 +114,7 @@ describe('GameController', () => {
 
         const response = await req(
           token,
-          'POST',
+          'PATCH',
           `/games/invitation/${'invalid'}`,
         );
 
@@ -127,7 +129,7 @@ describe('GameController', () => {
 
         const response = await req(
           token,
-          'POST',
+          'PATCH',
           `/games/invitation/${'invalid'}`,
         );
 
