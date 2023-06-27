@@ -62,7 +62,7 @@ export class QueueService {
     }
   }
 
-  private async processLadderQueue(): Promise<void> {
+  private processLadderQueue(): void {
     while (true) {
       const newGame: GameModel = this.queueFactory.ladderGameMatch();
       if (!newGame) break;
