@@ -3,9 +3,11 @@ import { List } from 'src/global/utils/list';
 
 export class NormalQueue {
   head: List<NormalQueueUser>;
+  size: number;
 
   constructor() {
     this.head = new List<NormalQueueUser>(null);
+    this.size = 0;
   }
 
   add(user: NormalQueueUser): void {
@@ -16,6 +18,7 @@ export class NormalQueue {
     const newNode: List<NormalQueueUser> = new List<NormalQueueUser>(user);
     newNode.next = tmp.next;
     tmp.next = newNode;
+    this.size++;
   }
 
   delete(userId: number): void {
@@ -24,11 +27,9 @@ export class NormalQueue {
       tmp = tmp.next;
     }
     if (tmp.data) {
-      tmp.prev.next = tmp.next;
-      tmp.next.prev = tmp.prev;
-      tmp.next = null;
-      tmp.data = null;
-      tmp.prev = null;
+      tmp.next.data = null;
+      tmp.next = tmp.next.next;
+      this.size--;
     }
   }
 }
