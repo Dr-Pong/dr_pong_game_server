@@ -48,7 +48,7 @@ export class QueueService {
     const release = await this.mutex.acquire();
     try {
       this.processNormalQueue();
-      await this.processLadderQueue();
+      this.processLadderQueue();
     } finally {
       release();
     }
@@ -58,7 +58,7 @@ export class QueueService {
     while (true) {
       const newGame: GameModel = this.queueFactory.normalGameMatch();
       if (!newGame) break;
-      this.gameGateway.startGame(newGame);
+      // this.gameGateway.startGame(newGame);
     }
   }
 
@@ -66,7 +66,7 @@ export class QueueService {
     while (true) {
       const newGame: GameModel = this.queueFactory.ladderGameMatch();
       if (!newGame) break;
-      this.gameGateway.startGame(newGame);
+      // this.gameGateway.startGame(newGame);
     }
   }
 }
