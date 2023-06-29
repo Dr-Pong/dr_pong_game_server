@@ -8,6 +8,7 @@ import { addTransactionalDataSource } from 'typeorm-transactional';
 import { DataSource } from 'typeorm';
 import { FactoryModule } from './domain/factory/factory.module';
 import { GameModule } from './domain/game/game.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { GameModule } from './domain/game/game.module';
     AuthModule,
     FactoryModule,
     GameModule,
+    ScheduleModule.forRoot(),
   ],
   controllers: [AppController],
   providers: [AppService],

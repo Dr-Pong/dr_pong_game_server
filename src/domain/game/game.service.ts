@@ -49,7 +49,11 @@ export class GameService {
     const invitation = user.inviteList.get(inviteId);
     validateInvite(invitation);
     this.deleteGameInvite({ senderId: invitation.senderId });
-    const game: GameModel = new GameModel(invitation.mode);
+    const game: GameModel = new GameModel(
+      invitation.senderId,
+      userId,
+      invitation.mode,
+    );
     return new GameInviteAcceptResponseDto(game.id);
   }
 
