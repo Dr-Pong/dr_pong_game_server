@@ -1,9 +1,9 @@
-import { Ball } from './ball';
-
 export type BarMode = 'normal' | 'special';
+export type BarDirection = 'left' | 'right' | 'stop';
 
 export class Bar {
   speed: number;
+  direction: 'left' | 'right' | 'stop';
   width: number;
   position: number;
   mode: BarMode;
@@ -14,20 +14,23 @@ export class Bar {
     this.position = position;
   }
 
+  reset(): void {
+    this.direction = 'stop';
+  }
+
+  move(): void {
+    if (this.direction === 'left') {
+      this.moveLeft();
+    } else if (this.direction === 'right') {
+      this.moveRight();
+    }
+  }
+
   moveLeft(): void {
     this.position -= this.speed;
   }
 
   moveRight(): void {
     this.position += this.speed;
-  }
-
-  touch(ball: Ball): void {
-    if (this.mode === 'normal') {
-      ball.vector.y = -ball.vector.y; // 회전량에 따라 반사각이 달라지는거 추가하기
-    }
-    if (this.mode === 'special') {
-      //   ball.vector.x = -ball.vector.x;
-    }
   }
 }
