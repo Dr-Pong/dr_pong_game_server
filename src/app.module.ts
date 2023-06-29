@@ -9,6 +9,7 @@ import { DataSource } from 'typeorm';
 import { FactoryModule } from './domain/factory/factory.module';
 import { GameModule } from './domain/game/game.module';
 import { ScheduleModule } from '@nestjs/schedule';
+import { QueueModule } from './domain/queue/queue.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { ScheduleModule } from '@nestjs/schedule';
     FactoryModule,
     GameModule,
     ScheduleModule.forRoot(),
+    QueueModule,
   ],
   controllers: [AppController],
   providers: [AppService],

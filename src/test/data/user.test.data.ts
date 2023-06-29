@@ -32,6 +32,18 @@ export class UserTestData {
     return userModel;
   }
 
+  async createUserWithLp(nickname: string, lp: number): Promise<UserModel> {
+    const user: User = await this.userRepository.save({
+      id: this.users.length + 1,
+      nickname: nickname,
+      ladderPoint: lp,
+    });
+    this.users.push(user);
+    const userModel: UserModel = UserModel.fromEntity(user);
+    this.userFactory.create(userModel);
+    return userModel;
+  }
+
   async createBasicUsers(person: number): Promise<void> {
     const index: number = person;
     for (let i = 0; i < index; i++) {
