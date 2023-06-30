@@ -172,6 +172,7 @@ export class GameModel {
     const barLeft: number = bar.position - bar.width / 2;
     const barRight: number = bar.position + bar.width / 2;
 
+    // 바의 위쪽과 아래쪽을 체크
     if (yPosition === 0)
       return (
         ball.y - ball.size <= yPosition &&
