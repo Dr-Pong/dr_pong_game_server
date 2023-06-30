@@ -48,6 +48,7 @@
     "socket.io": "^4.6.1",
     "typeorm": "^0.3.16",
     "typeorm-transactional": "^0.4.1",
+    "util": "^0.12.5",
     "uuid": "^9.0.0",
     "uuid-with-v6": "^2.0.0"
   },
