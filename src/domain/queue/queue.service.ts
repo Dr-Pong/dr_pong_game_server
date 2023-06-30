@@ -66,7 +66,7 @@ export class QueueService {
     while (true) {
       const newGame: GameModel = this.queueFactory.ladderGameMatch();
       if (!newGame) break;
-      // this.gameGateway.startGame(newGame);
+      newGame.start();
     }
   }
 }
