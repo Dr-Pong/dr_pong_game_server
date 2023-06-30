@@ -13,6 +13,10 @@ export class GamePlayerModel {
     this.id = id;
     this.nickname = nickname;
     this.score = 0;
-    this.bar = new Bar(10, 100, 0);
+    this.bar = new Bar(
+      +process.env.BAR_SPEED,
+      +process.env.BAR_SIZE,
+      +process.env.BOARD_WIDTH / 2,
+    );
   }
 }
