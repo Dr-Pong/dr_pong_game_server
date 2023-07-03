@@ -55,6 +55,8 @@ export class GameService {
       acceptUser,
       invitation.mode,
     );
+    this.userFactory.setGameId(sendUser.id, game.id);
+    this.userFactory.setGameId(acceptUser.id, game.id);
     return new GameInviteAcceptResponseDto(game.id);
   }
 

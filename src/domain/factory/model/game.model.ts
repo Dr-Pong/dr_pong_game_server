@@ -9,7 +9,8 @@ import { Bar } from '../objects/bar';
 import * as util from 'util';
 import axios from 'axios';
 import { GameType } from 'src/global/type/type.game.type';
-import { PostGameRecordDto } from './post.game.record.dto';
+import { PostGameRecordDto } from '../../game/dto/post.game.record.dto';
+import { USERSTATUS_NOT_IN_GAME } from 'src/global/type/type.user.status';
 
 export class GameModel {
   id: string;
@@ -65,10 +66,17 @@ export class GameModel {
         `${process.env.WEB_URL}/games`,
         new PostGameRecordDto(this),
       );
+    } catch (e) {
+      console.log(e);
+    }
+    try {
       await axios.patch(`${process.env.CHAT_URL}/users/state`, {
-        user1Id: this.player1.id,
-        user2Id: this.player2.id,
-        state: 'endGame',
+        userId: this.player1.id,
+        state: USERSTATUS_NOT_IN_GAME,
+      });
+      await axios.patch(`${process.env.CHAT_URL}/users/state`, {
+        userId: this.player2.id,
+        state: USERSTATUS_NOT_IN_GAME,
       });
     } catch (e) {
       console.log(e);

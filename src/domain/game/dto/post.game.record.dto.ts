@@ -1,5 +1,5 @@
 import { eloChangeCulculator } from 'src/global/utils/util.elo';
-import { GameModel } from './game.model';
+import { GameModel } from '../../factory/model/game.model';
 
 export class PostGameRecordDto {
   player1: {

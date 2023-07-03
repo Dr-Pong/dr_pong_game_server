@@ -1,12 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { UserModel } from './model/user.model';
-import {
-  USERSTATUS_IN_GAME,
-  UserStatusType,
-} from 'src/global/type/type.user.status';
+import { UserStatusType } from 'src/global/type/type.user.status';
 import { InviteModel } from './model/invite.model';
 import { Socket } from 'socket.io';
-import { GATEWAY_GAME, GateWayType } from 'src/global/type/type.gateway';
 
 @Injectable()
 export class UserFactory {
@@ -31,15 +27,14 @@ export class UserFactory {
     user.status = status;
   }
 
-  setSocket(userId: number, type: GateWayType, socket: Socket): void {
+  setSocket(userId: number, socket: Socket): void {
     const user: UserModel = this.findById(userId);
-    user.socket[type] = socket;
-    if (socket && type == GATEWAY_GAME) {
-      this.setStatus(userId, USERSTATUS_IN_GAME);
-    }
-    if (!socket && type == GATEWAY_GAME) {
-      this.setStatus(userId, null);
-    }
+    user.socket = socket;
+  }
+
+  setGameId(userId: number, gameId: string): void {
+    const user: UserModel = this.findById(userId);
+    user.gameId = gameId;
   }
 
   invite(senderId: number, receiverId: number, invite: InviteModel): void {
