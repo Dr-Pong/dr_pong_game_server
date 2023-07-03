@@ -16,13 +16,13 @@ export class GameFactory {
     return this.games.get(id);
   }
 
-  setUserIsReady(userId: number, gameId: string): void {
+  setUserIsReady(userId: number, gameId: string, isReady: boolean): void {
     const game: GameModel = this.findById(gameId);
     if (game.player1.id === userId) {
-      game.player1.isReady = true;
+      game.player1.isReady = isReady;
     }
     if (game.player2.id === userId) {
-      game.player2.isReady = true;
+      game.player2.isReady = isReady;
     }
   }
 }
