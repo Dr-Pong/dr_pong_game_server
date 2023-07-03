@@ -8,6 +8,7 @@ export class GamePlayerModel {
   score: number;
   bar: Bar;
   socket: Socket;
+  isReady: boolean;
 
   constructor(id: number, nickname: string) {
     this.id = id;
@@ -18,5 +19,6 @@ export class GamePlayerModel {
       +process.env.BAR_SIZE,
       +process.env.BOARD_WIDTH / 2,
     );
+    this.isReady = false;
   }
 }

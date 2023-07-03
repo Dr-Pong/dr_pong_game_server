@@ -14,6 +14,7 @@ export class UserModel {
   invite: InviteModel;
   inviteList: Map<string, InviteModel>;
   status: UserStatusType;
+  gameId: string;
 
   static fromEntity(entity: User): UserModel {
     const { id, nickname, ladderPoint } = entity;
