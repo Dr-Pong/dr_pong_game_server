@@ -101,5 +101,25 @@ describe('QueueService', () => {
         if (queueFactory.ladderQueue.size === 0) break;
       }
     }, 1000000);
+
+    it.only('[Valid Case] 게임 간단', async () => {
+      for (let i = 0; i < 2; i++) {
+        const user: UserModel = await userData.createUserWithLp(
+          'user' + (i * 2).toString(),
+          randomInt(999, 1000),
+        );
+        await service.postQueue({
+          userId: user.id,
+          type: GAMETYPE_LADDER,
+          mode: GAMEMODE_CLASSIC,
+        });
+      }
+
+      await sleep(1);
+      await service.matching();
+      for (let i = 0; i < 100; i++) {
+        await sleep(1);
+      }
+    }, 100000000);
   });
 });

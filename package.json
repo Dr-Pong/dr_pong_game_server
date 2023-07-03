@@ -33,7 +33,7 @@
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.0",
     "cron": "^2.3.1",
-    "dotenv": "^16.0.3",
+    "dotenv": "^16.3.1",
     "n": "^9.0.1",
     "opt": "^0.1.14",
     "otplib": "^12.0.1",
@@ -48,6 +48,7 @@
     "socket.io": "^4.6.1",
     "typeorm": "^0.3.16",
     "typeorm-transactional": "^0.4.1",
+    "util": "^0.12.5",
     "uuid": "^9.0.0",
     "uuid-with-v6": "^2.0.0"
   },

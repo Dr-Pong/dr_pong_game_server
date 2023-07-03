@@ -45,13 +45,14 @@ export class GameService {
     postDto: PostGameInviteAcceptDto,
   ): Promise<GameInviteAcceptResponseDto> {
     const { userId, inviteId } = postDto;
-    const user = this.userFactory.findById(userId);
-    const invitation = user.inviteList.get(inviteId);
+    const acceptUser = this.userFactory.findById(userId);
+    const invitation: InviteModel = acceptUser.inviteList.get(inviteId);
+    const sendUser = this.userFactory.findById(invitation.senderId);
     validateInvite(invitation);
     this.deleteGameInvite({ senderId: invitation.senderId });
     const game: GameModel = new GameModel(
-      invitation.senderId,
-      userId,
+      sendUser,
+      acceptUser,
       invitation.mode,
     );
     return new GameInviteAcceptResponseDto(game.id);

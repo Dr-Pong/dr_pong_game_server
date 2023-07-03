@@ -9,8 +9,4 @@ export class GameBoard {
     this.width = width;
     this.height = height;
   }
-
-  touchWall(ball: Ball): void {
-    ball.vector.x = -ball.vector.x; // 회전에 따라 방향 추가 필요
-  }
 }

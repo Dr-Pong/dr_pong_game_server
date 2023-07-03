@@ -34,15 +34,15 @@ export class QueueFactory {
     let tmp: List<NormalQueueUser> = this.normalQueue.head;
     while (this.normalQueue.size >= 2 && tmp?.data && tmp.next) {
       if (tmp.data.gameMode === tmp.next?.data.gameMode) {
-        const user1Id = tmp.data.userId;
-        const user2Id = tmp.next.data.userId;
+        const user1: UserModel = this.userFactory.findById(tmp.data.userId);
+        const user2: UserModel = this.userFactory.findById(
+          tmp.next.data.userId,
+        );
         const gameMode = tmp.data.gameMode;
         this.normalQueue.delete(tmp.next.data.userId);
         this.normalQueue.delete(tmp.data.userId);
 
-        return this.gameFactory.create(
-          new GameModel(user1Id, user2Id, gameMode),
-        );
+        return this.gameFactory.create(new GameModel(user1, user2, gameMode));
       }
       tmp = tmp.next;
     }
@@ -53,14 +53,16 @@ export class QueueFactory {
     let tmp: List<LadderQueueUser> = this.ladderQueue.head;
     while (this.ladderQueue.size >= 2 && tmp?.data && tmp.next?.data) {
       if (isMatchableElo(tmp.data, tmp.next.data)) {
-        const user1Id = tmp.data.userId;
-        const user2Id = tmp.next.data.userId;
+        const user1: UserModel = this.userFactory.findById(tmp.data.userId);
+        const user2: UserModel = this.userFactory.findById(
+          tmp.next.data.userId,
+        );
         tmp = this.ladderQueue.head;
-        this.ladderQueue.delete(user1Id);
-        this.ladderQueue.delete(user2Id);
+        this.ladderQueue.delete(user1.id);
+        this.ladderQueue.delete(user2.id);
 
         return this.gameFactory.create(
-          new GameModel(user1Id, user2Id, GAMEMODE_CLASSIC),
+          new GameModel(user1, user2, GAMEMODE_CLASSIC),
         );
       } else tmp = tmp.next;
     }
