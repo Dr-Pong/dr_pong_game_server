@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { UserModel } from './model/user.model';
 import { UserStatusType } from 'src/global/type/type.user.status';
 import { InviteModel } from './model/invite.model';
+import { Socket } from 'socket.io';
 
 @Injectable()
 export class UserFactory {
@@ -24,6 +25,16 @@ export class UserFactory {
   setStatus(userId: number, status: UserStatusType): void {
     const user: UserModel = this.findById(userId);
     user.status = status;
+  }
+
+  setSocket(userId: number, socket: Socket): void {
+    const user: UserModel = this.findById(userId);
+    user.socket = socket;
+  }
+
+  setGameId(userId: number, gameId: string): void {
+    const user: UserModel = this.findById(userId);
+    user.gameId = gameId;
   }
 
   invite(senderId: number, receiverId: number, invite: InviteModel): void {

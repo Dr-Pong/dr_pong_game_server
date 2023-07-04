@@ -42,7 +42,12 @@ export class QueueFactory {
         this.normalQueue.delete(tmp.next.data.userId);
         this.normalQueue.delete(tmp.data.userId);
 
-        return this.gameFactory.create(new GameModel(user1, user2, gameMode));
+        const game: GameModel = this.gameFactory.create(
+          new GameModel(user1, user2, gameMode),
+        );
+        this.userFactory.setGameId(user1.id, game.id);
+        this.userFactory.setGameId(user2.id, game.id);
+        return game;
       }
       tmp = tmp.next;
     }
@@ -61,9 +66,12 @@ export class QueueFactory {
         this.ladderQueue.delete(user1.id);
         this.ladderQueue.delete(user2.id);
 
-        return this.gameFactory.create(
+        const game: GameModel = this.gameFactory.create(
           new GameModel(user1, user2, GAMEMODE_CLASSIC),
         );
+        this.userFactory.setGameId(user1.id, game.id);
+        this.userFactory.setGameId(user2.id, game.id);
+        return game;
       } else tmp = tmp.next;
     }
     return null;

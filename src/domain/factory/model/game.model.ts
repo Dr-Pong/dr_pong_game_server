@@ -7,10 +7,15 @@ import { UserModel } from './user.model';
 import { GameLog } from './game.log';
 import { Bar } from '../objects/bar';
 import * as util from 'util';
+import axios from 'axios';
+import { GameType } from 'src/global/type/type.game.type';
+import { PostGameRecordDto } from '../../game/dto/post.game.record.dto';
+import { USERSTATUS_NOT_IN_GAME } from 'src/global/type/type.user.status';
 
 export class GameModel {
   id: string;
   mode: GameMode;
+  type: GameType;
   player1: GamePlayerModel;
   player2: GamePlayerModel;
   startTime: Date;
@@ -52,10 +57,30 @@ export class GameModel {
     return this;
   }
 
-  end(): void {
+  async end(): Promise<void> {
     this.status = 'end';
     this.endTime = new Date();
     console.log('result: ', util.inspect(this, true, 10, true));
+    try {
+      await axios.post(
+        `${process.env.WEB_URL}/games`,
+        new PostGameRecordDto(this),
+      );
+    } catch (e) {
+      console.log(e);
+    }
+    try {
+      await axios.patch(`${process.env.CHAT_URL}/users/state`, {
+        userId: this.player1.id,
+        state: USERSTATUS_NOT_IN_GAME,
+      });
+      await axios.patch(`${process.env.CHAT_URL}/users/state`, {
+        userId: this.player2.id,
+        state: USERSTATUS_NOT_IN_GAME,
+      });
+    } catch (e) {
+      console.log(e);
+    }
   }
 
   reset(): void {
@@ -154,7 +179,10 @@ export class GameModel {
       this.round++;
       console.log('player2 win');
     }
-    if (this.checkGameEnd()) return this.end();
+    if (this.checkGameEnd()) {
+      this.end();
+      return;
+    }
     if (player1Win || player2Win) {
       this.reset();
     }
