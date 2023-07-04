@@ -39,7 +39,7 @@ export class QueueGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.sockets.delete(socket.id);
   }
 
-  async sendGameStart(game: GameModel): Promise<void> {
+  async sendJoinGame(game: GameModel): Promise<void> {
     const player1: UserModel = this.userFactory.findById(game.player1.id);
     const player2: UserModel = this.userFactory.findById(game.player2.id);
     player1.socket.emit('joinGame', { roomId: game.id });

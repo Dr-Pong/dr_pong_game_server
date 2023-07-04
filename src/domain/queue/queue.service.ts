@@ -72,7 +72,7 @@ export class QueueService {
       const newGame: GameModel = this.queueFactory.ladderGameMatch();
       if (!newGame) break;
       console.log(this.gameFactory.create(newGame).id);
-      this.queueGateway.sendGameStart(newGame);
+      this.queueGateway.sendJoinGame(newGame);
     }
   }
 }
