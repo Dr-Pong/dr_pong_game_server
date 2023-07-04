@@ -18,31 +18,29 @@ export class Bar {
     this.speed = speed;
     this.width = width;
     this.position = position;
-    this.direction = randomInt(2) % 2 === 0 ? 'left' : 'right'; // 콘솔 테스트용
-    // this.direction = 'stop'; // 실제 쓸거
+    this.direction = 'stop';
     this.mode = 'normal';
     this.elasticity = 1;
     this.friction = randomInt(20, 50) / 10; // 0.5 ~ 1.5
   }
 
   reset(): void {
-    this.direction = randomInt(2) % 2 === 0 ? 'left' : 'right'; // 콘솔 테스트용
-    // this.direction = 'stop'; // 실제 쓸거
+    this.direction = 'stop'; // 실제 쓸거
     this.position = +process.env.BOARD_WIDTH / 2;
   }
 
   move(): void {
     // 벽 충돌 처리
     if (this.position <= this.width / 2 && this.direction === 'left') {
-      this.direction = 'right'; // 콘솔 테스트용
-      // return;
+      this.direction = 'stop';
+      return;
     }
     if (
       this.position >= +process.env.BOARD_WIDTH - this.width / 2 &&
       this.direction === 'right'
     ) {
-      this.direction = 'left'; // 콘솔 테스트용
-      // return;
+      this.direction = 'stop';
+      return;
     }
 
     if (this.direction === 'left') {
