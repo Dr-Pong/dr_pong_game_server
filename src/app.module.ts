@@ -10,6 +10,10 @@ import { FactoryModule } from './domain/factory/factory.module';
 import { GameModule } from './domain/game/game.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { QueueModule } from './domain/queue/queue.module';
+import { UserController } from './domain/user/user.controller';
+import { UserModule } from './domain/user/user.module';
+import { User } from './domain/user/user.entity';
+import { UserRepository } from './domain/user/user.repository';
 
 @Module({
   imports: [
@@ -31,8 +35,10 @@ import { QueueModule } from './domain/queue/queue.module';
     GameModule,
     ScheduleModule.forRoot(),
     QueueModule,
+    UserModule,
+    TypeOrmModule.forFeature([User]),
   ],
-  controllers: [AppController],
-  providers: [AppService],
+  controllers: [AppController, UserController],
+  providers: [AppService, UserRepository],
 })
 export class AppModule {}
