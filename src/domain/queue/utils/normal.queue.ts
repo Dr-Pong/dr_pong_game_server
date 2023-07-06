@@ -22,8 +22,8 @@ export class NormalQueue {
   }
 
   delete(userId: number): void {
-    let tmp: List<NormalQueueUser> = this.head;
-    while (tmp.data?.userId === userId) {
+    let tmp: List<NormalQueueUser> = this?.head;
+    while (tmp?.data?.userId === userId) {
       tmp = tmp.next;
     }
     if (tmp.data) {
