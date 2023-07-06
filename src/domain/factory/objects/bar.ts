@@ -21,7 +21,7 @@ export class Bar {
     this.direction = 'stop';
     this.mode = 'normal';
     this.elasticity = 1;
-    this.friction = randomInt(20, 50) / 10; // 0.5 ~ 1.5
+    this.friction = randomInt(10, 15) / 100; // 0.5 ~ 1.5
   }
 
   reset(): void {
@@ -31,18 +31,6 @@ export class Bar {
 
   move(): void {
     // 벽 충돌 처리
-    if (this.position <= this.width / 2 && this.direction === 'left') {
-      this.direction = 'stop';
-      return;
-    }
-    if (
-      this.position >= +process.env.BOARD_WIDTH - this.width / 2 &&
-      this.direction === 'right'
-    ) {
-      this.direction = 'stop';
-      return;
-    }
-
     if (this.direction === 'left') {
       this.moveLeft();
     } else if (this.direction === 'right') {
@@ -52,9 +40,19 @@ export class Bar {
 
   moveLeft(): void {
     this.position -= this.speed / +process.env.GAME_FRAME;
+    if (this.position <= this.width / 2) {
+      this.direction = 'stop';
+      this.position = this.width / 2;
+      return;
+    }
   }
 
   moveRight(): void {
     this.position += this.speed / +process.env.GAME_FRAME;
+    if (this.position >= +process.env.BOARD_WIDTH - this.width / 2) {
+      this.direction = 'stop';
+      this.position = +process.env.BOARD_WIDTH - this.width / 2;
+      return;
+    }
   }
 }
