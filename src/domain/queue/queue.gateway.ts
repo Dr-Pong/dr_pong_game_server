@@ -9,7 +9,6 @@ import { QueueFactory } from '../factory/queue.factory';
 import { Socket } from 'socket.io';
 import { UserModel } from '../factory/model/user.model';
 import { getUserFromSocket } from '../game/game.gateway';
-import { GameModel } from '../factory/model/game.model';
 
 @WebSocketGateway({ namespace: '/' })
 export class QueueGateway implements OnGatewayConnection, OnGatewayDisconnect {
@@ -27,7 +26,7 @@ export class QueueGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
 
     if (user.socket?.id !== socket.id) {
-      user.socket.disconnect();
+      user.socket?.disconnect();
     }
     this.userFactory.setSocket(user.id, socket);
     this.sockets.set(socket.id, user.id);
@@ -39,10 +38,8 @@ export class QueueGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.sockets.delete(socket.id);
   }
 
-  async sendJoinGame(game: GameModel): Promise<void> {
-    const player1: UserModel = this.userFactory.findById(game.player1.id);
-    const player2: UserModel = this.userFactory.findById(game.player2.id);
-    player1.socket.emit('joinGame', { roomId: game.id });
-    player2.socket.emit('joinGame', { roomId: game.id });
+  async sendJoinGame(userId: number): Promise<void> {
+    const user: UserModel = this.userFactory.findById(userId);
+    user.socket?.emit('joinGame', { roomId: user.gameId });
   }
 }
