@@ -1,5 +1,4 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { UserFactory } from '../factory/user.factory';
 import { QueueFactory } from '../factory/queue.factory';
 import { PostQueueDto } from './dto/post.queue.dto';
 import { Mutex } from 'async-mutex';
@@ -9,12 +8,10 @@ import { DeleteQueueDto } from './dto/delete.queue.dto';
 import { Cron } from '@nestjs/schedule';
 import { GameFactory } from '../factory/game.factory';
 import { QueueGateway } from './queue.gateway';
-import { UserModel } from '../factory/model/user.model';
 
 @Injectable()
 export class QueueService {
   constructor(
-    private readonly userFactory: UserFactory,
     private readonly gameFactory: GameFactory,
     private readonly queueFactory: QueueFactory,
     private readonly queueGateway: QueueGateway,
@@ -28,8 +25,6 @@ export class QueueService {
       release();
       throw new BadRequestException('Already in queue');
     }
-    const user: UserModel = this.userFactory.findById(userId);
-    if (user.gameId) this.queueGateway.sendJoinGame(userId);
 
     try {
       if (type === GAMETYPE_LADDER) {
