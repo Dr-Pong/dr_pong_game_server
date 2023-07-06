@@ -7,18 +7,22 @@ import { GAMETYPE_LADDER } from 'src/global/type/type.game.type';
 import { GameModel } from '../factory/model/game.model';
 import { DeleteQueueDto } from './dto/delete.queue.dto';
 import { Cron } from '@nestjs/schedule';
+import { GameFactory } from '../factory/game.factory';
+import { QueueGateway } from './queue.gateway';
 
 @Injectable()
 export class QueueService {
   constructor(
-    private readonly userFactory: UserFactory,
+    private readonly gameFactory: GameFactory,
     private readonly queueFactory: QueueFactory,
+    private readonly queueGateway: QueueGateway,
   ) {}
   private mutex: Mutex = new Mutex();
 
   async postQueue(postDto: PostQueueDto): Promise<void> {
     const { userId, mode, type } = postDto;
     const release = await this.mutex.acquire();
+    console.log(process.env.BOARD_WIDTH, process.env.BOARD_HEIGHT);
 
     try {
       if (type === GAMETYPE_LADDER) {
@@ -47,6 +51,7 @@ export class QueueService {
   async matching(): Promise<void> {
     const release = await this.mutex.acquire();
     try {
+      console.log('matching...');
       this.processNormalQueue();
       this.processLadderQueue();
     } finally {
@@ -58,7 +63,7 @@ export class QueueService {
     while (true) {
       const newGame: GameModel = this.queueFactory.normalGameMatch();
       if (!newGame) break;
-      // this.gameGateway.startGame(newGame);
+      console.log(this.gameFactory.create(newGame).id);
     }
   }
 
@@ -66,7 +71,8 @@ export class QueueService {
     while (true) {
       const newGame: GameModel = this.queueFactory.ladderGameMatch();
       if (!newGame) break;
-      newGame.start();
+      console.log(this.gameFactory.create(newGame).id);
+      this.queueGateway.sendGameStart(newGame);
     }
   }
 }

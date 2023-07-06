@@ -61,6 +61,7 @@ describe('QueueService', () => {
 
   afterAll(async () => {
     await dataSource.destroy();
+    await dataSource.dropDatabase();
   });
 
   describe('큐 입장 테스트', () => {

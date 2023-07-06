@@ -1,7 +1,9 @@
 import {
   ConnectedSocket,
+  MessageBody,
   OnGatewayConnection,
   OnGatewayDisconnect,
+  SubscribeMessage,
   WebSocketGateway,
 } from '@nestjs/websockets';
 import { GameFactory } from '../factory/game.factory';
@@ -27,9 +29,11 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
   async handleConnection(@ConnectedSocket() socket: Socket) {
     const user: UserModel = getUserFromSocket(socket, this.userFactory);
     if (!user) {
+      console.log('user not found', socket.id);
       socket.disconnect();
       return;
     }
+    console.log('user connected', user.id, user.nickname);
     this.userFactory.setStatus(user.id, USERSTATUS_IN_GAME);
     this.sockets.set(socket.id, user.id);
 
@@ -39,20 +43,20 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
         state: USERSTATUS_IN_GAME,
       });
     } catch (e) {
-      socket.disconnect();
       console.log(e);
-      return;
     }
     this.gameFactory.setUserIsReady(user.id, user.gameId, true);
     const game: GameModel = this.gameFactory.findById(user.gameId);
+    if (!game) {
+      socket.disconnect();
+      return;
+    }
     if (game.player1.id === user.id) {
       game.player1.socket = socket;
     } else {
       game.player2.socket = socket;
     }
-    if (game.player1.isReady && game.player2.isReady) {
-      game.start();
-    }
+    this.gameFactory.start(game.id);
   }
 
   handleDisconnect(@ConnectedSocket() socket: Socket) {
@@ -61,6 +65,68 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
     );
     this.userFactory.setStatus(user.id, USERSTATUS_NOT_IN_GAME);
     this.sockets.delete(socket.id);
+  }
+
+  @SubscribeMessage('keyPress')
+  handleKeyPress(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody() data: { roomId: string; key: 'left' | 'right' },
+  ): void {
+    console.log('keyPress', data);
+    const userId: number = this.sockets.get(socket.id);
+    if (!userId) {
+      socket.disconnect();
+      return;
+    }
+    const game: GameModel = this.gameFactory.findById(data.roomId);
+    if (!game) {
+      socket.disconnect();
+      return;
+    }
+    this.gameFactory.handelKeyPress(game.id, userId, data.key);
+  }
+
+  @SubscribeMessage('keyRelease')
+  handleKeyRelease(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody() data: { roomId: string },
+  ): void {
+    const userId: number = this.sockets.get(socket.id);
+    if (!userId) {
+      socket.disconnect();
+      return;
+    }
+    const game: GameModel = this.gameFactory.findById(data.roomId);
+    if (!game) {
+      socket.disconnect();
+      return;
+    }
+    this.gameFactory.handelKeyRelease(game.id, userId);
+  }
+
+  @SubscribeMessage('myEmoji')
+  handleMyEmoji(
+    @ConnectedSocket() socket: Socket,
+    data: { url: string },
+  ): void {
+    const userId: number = this.sockets.get(socket.id);
+    if (!userId) {
+      socket.disconnect();
+      return;
+    }
+    const game: GameModel = this.gameFactory.findById(
+      this.userFactory.findById(userId).gameId,
+    );
+    if (!game) {
+      socket.disconnect();
+      return;
+    }
+    if (game.player1.id === userId) {
+      game.player2.socket?.emit('opponentEmoji', { url: data.url });
+    }
+    if (game.player2.id === userId) {
+      game.player1.socket?.emit('opponentEmoji', { url: data.url });
+    }
   }
 }
 

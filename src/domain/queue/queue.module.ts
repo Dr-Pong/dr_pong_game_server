@@ -5,5 +5,6 @@ import { FactoryModule } from '../factory/factory.module';
 @Module({
   imports: [FactoryModule],
   providers: [QueueService],
+  exports: [QueueService],
 })
 export class QueueModule {}

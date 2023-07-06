@@ -77,7 +77,8 @@ export class GameController {
     await this.gameService.deleteGameInviteReject(deleteDto);
   }
 
-  @Post('/queue/:type/:mode')
+  @Post('/queue/:type')
+  @UseGuards(AuthGuard('jwt'))
   async gameQueuePost(
     @Requestor() requestor: UserIdCardDto,
     @Param('type') type: GameType,
@@ -89,6 +90,7 @@ export class GameController {
   }
 
   @Delete('/queue')
+  @UseGuards(AuthGuard('jwt'))
   async gameQueueDelete(@Requestor() requestor: UserIdCardDto): Promise<void> {
     const { id: userId } = requestor;
     const deleteDto = new DeleteQueueDto(userId);
