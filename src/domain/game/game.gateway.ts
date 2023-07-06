@@ -43,7 +43,7 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
         state: USERSTATUS_IN_GAME,
       });
     } catch (e) {
-      console.log(e);
+      console.log(e?.response?.data);
     }
     this.gameFactory.setUserIsReady(user.id, user.gameId, true);
     const game: GameModel = this.gameFactory.findById(user.gameId);
@@ -68,11 +68,10 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('keyPress')
-  handleKeyPress(
+  async handleKeyPress(
     @ConnectedSocket() socket: Socket,
     @MessageBody() data: { roomId: string; key: 'left' | 'right' },
-  ): void {
-    console.log('keyPress', data);
+  ): Promise<void> {
     const userId: number = this.sockets.get(socket.id);
     if (!userId) {
       socket.disconnect();
@@ -87,10 +86,10 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('keyRelease')
-  handleKeyRelease(
+  async handleKeyRelease(
     @ConnectedSocket() socket: Socket,
-    @MessageBody() data: { roomId: string },
-  ): void {
+    @MessageBody() data: { roomId: string; key: 'left' | 'right' },
+  ): Promise<void> {
     const userId: number = this.sockets.get(socket.id);
     if (!userId) {
       socket.disconnect();
@@ -101,7 +100,7 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
       socket.disconnect();
       return;
     }
-    this.gameFactory.handelKeyRelease(game.id, userId);
+    this.gameFactory.handelKeyRelease(game.id, userId, data.key);
   }
 
   @SubscribeMessage('myEmoji')

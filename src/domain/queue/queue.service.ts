@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { UserFactory } from '../factory/user.factory';
 import { QueueFactory } from '../factory/queue.factory';
 import { PostQueueDto } from './dto/post.queue.dto';
@@ -9,10 +9,12 @@ import { DeleteQueueDto } from './dto/delete.queue.dto';
 import { Cron } from '@nestjs/schedule';
 import { GameFactory } from '../factory/game.factory';
 import { QueueGateway } from './queue.gateway';
+import { UserModel } from '../factory/model/user.model';
 
 @Injectable()
 export class QueueService {
   constructor(
+    private readonly userFactory: UserFactory,
     private readonly gameFactory: GameFactory,
     private readonly queueFactory: QueueFactory,
     private readonly queueGateway: QueueGateway,
@@ -22,7 +24,12 @@ export class QueueService {
   async postQueue(postDto: PostQueueDto): Promise<void> {
     const { userId, mode, type } = postDto;
     const release = await this.mutex.acquire();
-    console.log(process.env.BOARD_WIDTH, process.env.BOARD_HEIGHT);
+    if (this.queueFactory.isIn(userId)) {
+      release();
+      throw new BadRequestException('Already in queue');
+    }
+    const user: UserModel = this.userFactory.findById(userId);
+    if (user.gameId) this.queueGateway.sendJoinGame(userId);
 
     try {
       if (type === GAMETYPE_LADDER) {
@@ -63,7 +70,7 @@ export class QueueService {
     while (true) {
       const newGame: GameModel = this.queueFactory.normalGameMatch();
       if (!newGame) break;
-      console.log(this.gameFactory.create(newGame).id);
+      this.gameFactory.create(newGame);
     }
   }
 
@@ -71,8 +78,9 @@ export class QueueService {
     while (true) {
       const newGame: GameModel = this.queueFactory.ladderGameMatch();
       if (!newGame) break;
-      console.log(this.gameFactory.create(newGame).id);
-      this.queueGateway.sendJoinGame(newGame);
+      this.gameFactory.create(newGame);
+      this.queueGateway.sendJoinGame(newGame.player1.id);
+      this.queueGateway.sendJoinGame(newGame.player2.id);
     }
   }
 }
