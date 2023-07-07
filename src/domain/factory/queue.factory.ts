@@ -81,6 +81,24 @@ export class QueueFactory {
     this.ladderQueue.delete(userId);
     this.normalQueue.delete(userId);
   }
+
+  isIn(userId: number): boolean {
+    let ladderQueue: List<LadderQueueUser> = this.ladderQueue.head;
+    while (ladderQueue) {
+      if (ladderQueue.data.userId === userId) {
+        return true;
+      }
+      ladderQueue = ladderQueue.next;
+    }
+    let normalQueue: List<NormalQueueUser> = this.normalQueue.head;
+    while (normalQueue) {
+      if (normalQueue.data.userId === userId) {
+        return true;
+      }
+      normalQueue = normalQueue.next;
+    }
+    return false;
+  }
 }
 
 function isMatchableElo(

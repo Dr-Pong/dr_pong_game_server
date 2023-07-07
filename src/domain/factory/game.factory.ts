@@ -82,42 +82,43 @@ export class GameFactory {
     const ball: Ball = game.ball;
 
     // user2 바 체크
+    if (player.id === game.player2.id && this.isBallTouchingBar(ball, bar, 0)) {
+      this.handleBallTouchingBar(game, ball, player, ball.size / 2);
+    }
+
+    //  user1 바 체크
     if (
-      player.id === game.player2.id &&
+      player.id === game.player1.id &&
       this.isBallTouchingBar(ball, bar, game.board.height)
     ) {
       this.handleBallTouchingBar(
         game,
         ball,
         player,
-        game.board.height - ball.size,
+        game.board.height - ball.size / 2,
       );
-    }
-
-    //  user1 바 체크
-    if (player.id === game.player1.id && this.isBallTouchingBar(ball, bar, 0)) {
-      this.handleBallTouchingBar(game, ball, player, ball.size);
     }
   }
 
   handleTouchWall(game: GameModel): void {
     const ball: Ball = game.ball;
     // 왼쪽 벽 체크
-    if (ball.x - ball.size <= 0) {
+    if (ball.x - ball.size / 2 <= 0) {
       ball.touchWall();
-      ball.setPosition(ball.size, ball.y);
+      ball.setPosition(ball.size / 2, ball.y);
     }
     // 오른쪽 벽 체크
-    if (ball.x + ball.size >= game.board.width) {
+    if (ball.x + ball.size / 2 >= game.board.width) {
       ball.touchWall();
-      ball.setPosition(game.board.width - ball.size, ball.y);
+      ball.setPosition(game.board.width - ball.size / 2, ball.y);
     }
   }
 
   handleGoal(game: GameModel): void {
     const ball: Ball = game.ball;
-    const player1Win: boolean = ball.y + ball.size > game.board.height;
-    const player2Win: boolean = ball.y - ball.size < 0;
+    const player1Win: boolean = ball.y - ball.size / 2 < 0;
+
+    const player2Win: boolean = ball.y + ball.size / 2 > game.board.height;
 
     if (player1Win) {
       game.player1.score++;
@@ -166,22 +167,22 @@ export class GameFactory {
   }
 
   sendPositionUpdate(game: GameModel): void {
-    game.player1.socket.emit(
+    game.player1.socket?.emit(
       'posUpdate',
       new GamePosUpdateDto(game, game.player1.id),
     );
-    game.player2.socket.emit(
+    game.player2.socket?.emit(
       'posUpdate',
       new GamePosUpdateDto(game, game.player2.id),
     );
   }
 
   sendRoundUpdate(game: GameModel): void {
-    game.player1.socket.emit(
+    game.player1.socket?.emit(
       'roundUpdate',
       new GameRoundUpdateDto(game, game.player1.id),
     );
-    game.player2.socket.emit(
+    game.player2.socket?.emit(
       'roundUpdate',
       new GameRoundUpdateDto(game, game.player2.id),
     );
@@ -196,22 +197,30 @@ export class GameFactory {
     if (game.status !== 'playing') {
       return;
     }
-    console.log('handelKeyPress', gameId, userId, direction);
     if (game.player1.id === userId) {
       game.player1.bar.direction = direction;
     }
     if (game.player2.id === userId) {
-      game.player2.bar.direction = direction;
+      game.player2.bar.direction = direction === 'left' ? 'right' : 'left';
     }
   }
 
-  async handelKeyRelease(gameId: string, userId: number): Promise<void> {
+  async handelKeyRelease(
+    gameId: string,
+    userId: number,
+    direction: 'left' | 'right',
+  ): Promise<void> {
     const game: GameModel = this.findById(gameId);
-    if (game.player1.id === userId) {
+    if (
+      game.player1.id === userId &&
+      game.player1.bar.direction === direction
+    ) {
       game.player1.bar.direction = 'stop';
     }
-    console.log('handelKeyRelease', gameId, userId);
-    if (game.player2.id === userId) {
+    if (
+      game.player2.id === userId &&
+      game.player2.bar.direction !== direction
+    ) {
       game.player2.bar.direction = 'stop';
     }
   }
@@ -225,7 +234,7 @@ export class GameFactory {
         new PostGameRecordDto(game),
       );
     } catch (e) {
-      console.log(e);
+      console.log(e?.response?.data);
     }
     try {
       await axios.patch(`${process.env.CHAT_URL}/users/state`, {
@@ -237,7 +246,7 @@ export class GameFactory {
         state: USERSTATUS_NOT_IN_GAME,
       });
     } catch (e) {
-      console.log(e);
+      console.log(e?.response?.data);
     }
   }
 
@@ -245,15 +254,17 @@ export class GameFactory {
     const barLeft: number = bar.position - bar.width / 2;
     const barRight: number = bar.position + bar.width / 2;
 
-    // 바의 위쪽과 아래쪽을 체크
+    // 위쪽과 아래쪽을 체크
     if (yPosition === 0)
       return (
-        ball.y - ball.size <= yPosition &&
+        ball.y - ball.size / 2 <= yPosition &&
         ball.x >= barLeft &&
         ball.x <= barRight
       );
     return (
-      ball.y + ball.size >= yPosition && ball.x >= barLeft && ball.x <= barRight
+      ball.y + ball.size / 2 >= yPosition &&
+      ball.x >= barLeft &&
+      ball.x <= barRight
     );
   }
 

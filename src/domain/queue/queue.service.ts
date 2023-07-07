@@ -1,5 +1,4 @@
-import { Injectable } from '@nestjs/common';
-import { UserFactory } from '../factory/user.factory';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { QueueFactory } from '../factory/queue.factory';
 import { PostQueueDto } from './dto/post.queue.dto';
 import { Mutex } from 'async-mutex';
@@ -22,7 +21,10 @@ export class QueueService {
   async postQueue(postDto: PostQueueDto): Promise<void> {
     const { userId, mode, type } = postDto;
     const release = await this.mutex.acquire();
-    console.log(process.env.BOARD_WIDTH, process.env.BOARD_HEIGHT);
+    if (this.queueFactory.isIn(userId)) {
+      release();
+      throw new BadRequestException('Already in queue');
+    }
 
     try {
       if (type === GAMETYPE_LADDER) {
@@ -63,7 +65,7 @@ export class QueueService {
     while (true) {
       const newGame: GameModel = this.queueFactory.normalGameMatch();
       if (!newGame) break;
-      console.log(this.gameFactory.create(newGame).id);
+      this.gameFactory.create(newGame);
     }
   }
 
@@ -71,8 +73,9 @@ export class QueueService {
     while (true) {
       const newGame: GameModel = this.queueFactory.ladderGameMatch();
       if (!newGame) break;
-      console.log(this.gameFactory.create(newGame).id);
-      this.queueGateway.sendGameStart(newGame);
+      this.gameFactory.create(newGame);
+      this.queueGateway.sendJoinGame(newGame.player1.id);
+      this.queueGateway.sendJoinGame(newGame.player2.id);
     }
   }
 }
