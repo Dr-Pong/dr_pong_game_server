@@ -46,7 +46,7 @@ export class GameFactory {
       return;
     }
     await this.sendStartTimer(game);
-    if (game.status !== 'end') {
+    if (game.status !== 'playing') {
       game.status = 'playing';
       this.gameLoop(game);
     }
