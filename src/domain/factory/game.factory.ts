@@ -9,7 +9,7 @@ import { PostGameRecordDto } from '../game/dto/post.game.record.dto';
 import { USERSTATUS_NOT_IN_GAME } from 'src/global/type/type.user.status';
 import { GamePosUpdateDto } from '../game/dto/game.pos.update.dto';
 import { GameRoundUpdateDto } from '../game/dto/game.round.update.dto';
-import { sleep } from './sleep';
+import { sleep } from '../../global/utils/sleep';
 import { UserFactory } from './user.factory';
 import { UserModel } from './model/user.model';
 
