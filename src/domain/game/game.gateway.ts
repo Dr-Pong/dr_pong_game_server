@@ -17,6 +17,8 @@ import {
   USERSTATUS_IN_GAME,
   USERSTATUS_NOT_IN_GAME,
 } from 'src/global/type/type.user.status';
+import { GamePlayerModel } from '../factory/model/game-player.model';
+import { GameInitDto } from './dto/game.init.dto';
 
 @WebSocketGateway({ namespace: 'game' })
 export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
@@ -33,30 +35,8 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
       socket.disconnect();
       return;
     }
-    console.log('user connected', user.id, user.nickname);
-    this.userFactory.setStatus(user.id, USERSTATUS_IN_GAME);
-    this.sockets.set(socket.id, user.id);
-
-    try {
-      await axios.patch(`${process.env.CHAT_URL}/users/state`, {
-        user1Id: user.id,
-        state: USERSTATUS_IN_GAME,
-      });
-    } catch (e) {
-      console.log(e?.response?.data);
-    }
-    this.gameFactory.setUserIsReady(user.id, user.gameId, true);
-    const game: GameModel = this.gameFactory.findById(user.gameId);
-    if (!game) {
-      socket.disconnect();
-      return;
-    }
-    if (game.player1.id === user.id) {
-      game.player1.socket = socket;
-    } else {
-      game.player2.socket = socket;
-    }
-    this.gameFactory.start(game.id);
+    this.setUserInFactory(user, socket);
+    this.setUserInGame(user, socket);
   }
 
   handleDisconnect(@ConnectedSocket() socket: Socket) {
@@ -126,6 +106,55 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
     if (game.player2.id === userId) {
       game.player1.socket?.emit('opponentEmoji', { url: data.url });
     }
+  }
+
+  private async setUserInFactory(
+    user: UserModel,
+    socket: Socket,
+  ): Promise<void> {
+    console.log('user connected', user.id, user.nickname);
+    if (user.socket?.id !== socket.id) {
+      user.socket?.disconnect();
+    }
+    this.sockets.set(socket.id, user.id);
+    this.userFactory.setStatus(user.id, USERSTATUS_IN_GAME);
+
+    try {
+      await axios.patch(`${process.env.CHAT_URL}/users/state`, {
+        user1Id: user.id,
+        state: USERSTATUS_IN_GAME,
+      });
+    } catch (e) {
+      console.log(e?.response?.data);
+    }
+    this.gameFactory.setUserIsReady(user.id, user.gameId, true);
+  }
+
+  private async setUserInGame(user: UserModel, socket: Socket) {
+    const game: GameModel = this.gameFactory.findById(user.gameId);
+    if (!game) {
+      socket.disconnect();
+      return;
+    }
+    if (game.player1.id === user.id) {
+      game.player1.socket = socket;
+    } else {
+      game.player2.socket = socket;
+    }
+    this.sendGameInfo(user, game);
+    await this.gameFactory.start(game.id);
+  }
+
+  private async sendGameInfo(user: UserModel, game: GameModel): Promise<void> {
+    const gamePlayer: GamePlayerModel =
+      game.player1.id === user.id ? game.player1 : game.player2;
+    const opponent: GamePlayerModel =
+      game.player1.id === user.id ? game.player2 : game.player1;
+
+    gamePlayer.socket?.emit('matchInfo', {
+      nickname: opponent.nickname,
+    });
+    gamePlayer.socket?.emit('initData', new GameInitDto(game, user));
   }
 }
 
