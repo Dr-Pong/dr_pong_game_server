@@ -16,7 +16,7 @@ export class GamePlayerModel {
     this.score = 0;
     this.bar = new Bar(
       +process.env.BAR_SPEED,
-      +process.env.BAR_SIZE,
+      +process.env.BAR_WIDTH,
       +process.env.BOARD_WIDTH / 2,
     );
     this.isReady = false;

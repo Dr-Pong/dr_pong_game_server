@@ -51,10 +51,7 @@ export class Ball {
   reset(direction: number): void {
     this.x = +process.env.BOARD_WIDTH / 2;
     this.y = +process.env.BOARD_HEIGHT / 2;
-    this.direction = new Vector(
-      -randomInt(1, 10),
-      direction * randomInt(1, 10),
-    );
+    this.direction = new Vector(-randomInt(0, 5), direction * randomInt(5, 10));
     this.direction = this.direction.normalize();
     this.spinSpeed = 0;
   }
