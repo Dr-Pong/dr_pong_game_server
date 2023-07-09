@@ -38,7 +38,7 @@ export class LadderQueue {
 
   delete(userId: number): void {
     let tmp: List<LadderQueueUser> = this.head;
-    if (tmp.data.userId === userId) {
+    if (tmp.data?.userId === userId) {
       this.head = tmp.next;
       this.size--;
       return;
