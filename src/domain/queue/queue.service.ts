@@ -8,10 +8,12 @@ import { DeleteQueueDto } from './dto/delete.queue.dto';
 import { Cron } from '@nestjs/schedule';
 import { GameFactory } from '../factory/game.factory';
 import { QueueGateway } from './queue.gateway';
+import { UserFactory } from '../factory/user.factory';
 
 @Injectable()
 export class QueueService {
   constructor(
+    private readonly userFactory: UserFactory,
     private readonly gameFactory: GameFactory,
     private readonly queueFactory: QueueFactory,
     private readonly queueGateway: QueueGateway,
@@ -24,6 +26,10 @@ export class QueueService {
     if (this.queueFactory.isIn(userId)) {
       release();
       throw new BadRequestException('Already in queue');
+    }
+    if (this.userFactory.findById(userId).gameId) {
+      release();
+      throw new BadRequestException('Already in game');
     }
 
     try {
@@ -66,6 +72,8 @@ export class QueueService {
       const newGame: GameModel = this.queueFactory.normalGameMatch();
       if (!newGame) break;
       this.gameFactory.create(newGame);
+      this.queueGateway.sendJoinGame(newGame.player1.id);
+      this.queueGateway.sendJoinGame(newGame.player2.id);
     }
   }
 
