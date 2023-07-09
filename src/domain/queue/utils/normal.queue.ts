@@ -11,22 +11,40 @@ export class NormalQueue {
   }
 
   add(user: NormalQueueUser): void {
+    const newNode: List<NormalQueueUser> = new List<NormalQueueUser>(user);
+    if (this.size === 0) {
+      newNode.next = this.head;
+      this.head = newNode;
+      this.size++;
+      return;
+    }
     let tmp: List<NormalQueueUser> = this.head;
-    while (tmp.data?.gameMode >= user.gameMode) {
+    /**
+     * 자신과 같은 모드의 유저를 찾아서 그 뒤에 새로운 노드를 삽입한다.
+     */
+    while (tmp.next && tmp?.data?.gameMode !== user.gameMode) {
       tmp = tmp.next;
     }
-    const newNode: List<NormalQueueUser> = new List<NormalQueueUser>(user);
+    while (tmp.next && tmp.next.data?.gameMode === user.gameMode) {
+      tmp = tmp.next;
+    }
     newNode.next = tmp.next;
     tmp.next = newNode;
+
     this.size++;
   }
 
   delete(userId: number): void {
-    let tmp: List<NormalQueueUser> = this?.head;
-    while (tmp?.data?.userId === userId) {
+    let tmp: List<NormalQueueUser> = this.head;
+    if (tmp.data?.userId === userId) {
+      this.head = tmp.next;
+      this.size--;
+      return;
+    }
+    while (tmp?.next && tmp.next.data?.userId !== userId) {
       tmp = tmp.next;
     }
-    if (tmp.data) {
+    if (tmp?.next?.data.userId === userId) {
       tmp.next.data = null;
       tmp.next = tmp.next.next;
       this.size--;

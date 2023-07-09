@@ -32,18 +32,18 @@ export class QueueFactory {
 
   normalGameMatch(): GameModel {
     let tmp: List<NormalQueueUser> = this.normalQueue.head;
-    while (this.normalQueue.size >= 2 && tmp?.data && tmp.next) {
+    while (this.normalQueue.size >= 2 && tmp?.data && tmp.next?.data) {
       if (tmp.data.gameMode === tmp.next?.data.gameMode) {
         const user1: UserModel = this.userFactory.findById(tmp.data.userId);
         const user2: UserModel = this.userFactory.findById(
           tmp.next.data.userId,
         );
-        const gameMode = tmp.data.gameMode;
-        this.normalQueue.delete(tmp.next.data.userId);
-        this.normalQueue.delete(tmp.data.userId);
+        tmp = this.normalQueue.head;
+        this.normalQueue.delete(user1.id);
+        this.normalQueue.delete(user2.id);
 
         const game: GameModel = this.gameFactory.create(
-          new GameModel(user1, user2, gameMode),
+          new GameModel(user1, user2, tmp.data.gameMode),
         );
         this.userFactory.setGameId(user1.id, game.id);
         this.userFactory.setGameId(user2.id, game.id);
