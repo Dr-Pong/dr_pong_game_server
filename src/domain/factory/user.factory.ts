@@ -27,9 +27,9 @@ export class UserFactory {
     user.status = status;
   }
 
-  setSocket(userId: number, socket: Socket): void {
+  setSocket(userId: number, gatewayType: string, socket: Socket): void {
     const user: UserModel = this.findById(userId);
-    user.socket = socket;
+    user.socket[gatewayType] = socket;
   }
 
   setGameId(userId: number, gameId: string): void {
