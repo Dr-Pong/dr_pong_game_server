@@ -79,7 +79,6 @@ export class Ball {
 
   touchBar(bar: Bar): void {
     this.direction.y *= -1;
-    // process.stdout.write('\u0007');
     if (bar.direction === 'left') {
       this.spinSpeed =
         this.spinSpeed +

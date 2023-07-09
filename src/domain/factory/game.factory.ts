@@ -45,8 +45,8 @@ export class GameFactory {
     if (!game.player1.isReady || !game.player2.isReady) {
       return;
     }
-    await this.sendStartTimer(game);
     if (game.status !== 'playing') {
+      await this.sendStartTimer(game);
       game.status = 'playing';
       this.gameLoop(game);
     }
@@ -69,7 +69,6 @@ export class GameFactory {
     game.ball.move();
     game.player1.bar.move();
     game.player2.bar.move();
-    console.log({ x: game.ball.x, y: game.ball.y });
   }
 
   handleTouchEvent(game: GameModel): void {
@@ -169,12 +168,7 @@ export class GameFactory {
   }
 
   async resetGame(game: GameModel): Promise<void> {
-    game.status = 'standby';
-    game.ball.reset(game.round % 2 === 0 ? 1 : -1);
-    console.log('game.ball', {
-      vector: { x: game.ball.direction.x, y: game.ball.direction.y },
-      vectorSize: game.ball.direction.x ** 2 + game.ball.direction.y ** 2,
-    });
+    game.ball.reset(game.round % 2 === 1 ? 1 : -1);
     game.player1.bar.reset();
     game.player2.bar.reset();
     game.pastBallPosition = [];
@@ -227,6 +221,10 @@ export class GameFactory {
     direction: 'left' | 'right',
   ): Promise<void> {
     const game: GameModel = this.findById(gameId);
+    if (game.status !== 'playing') {
+      return;
+    }
+
     if (
       game.player1.id === userId &&
       game.player1.bar.direction === direction
@@ -268,7 +266,9 @@ export class GameFactory {
     const player1: UserModel = this.userFactory.findById(game.player1.id);
     const player2: UserModel = this.userFactory.findById(game.player2.id);
     player1.gameId = null;
+    player1.socket['game'] = null;
     player2.gameId = null;
+    player2.socket['game'] = null;
     this.games.delete(game.id);
   }
 
