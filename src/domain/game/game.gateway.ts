@@ -138,7 +138,7 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
 
     try {
       await axios.patch(`${process.env.CHAT_URL}/users/state`, {
-        user1Id: user.id,
+        userId: user.id,
         state: USERSTATUS_IN_GAME,
       });
     } catch (e) {
