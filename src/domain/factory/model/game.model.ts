@@ -25,8 +25,14 @@ export class GameModel {
   touchLog: GameLog[];
   pastBallPosition: { x: number; y: number }[];
 
-  constructor(player1: UserModel, player2: UserModel, mode: GameMode) {
+  constructor(
+    player1: UserModel,
+    player2: UserModel,
+    type: GameType,
+    mode: GameMode,
+  ) {
     this.id = uuid();
+    this.type = type;
     this.mode = mode;
     this.player1 = new GamePlayerModel(player1);
     this.player2 = new GamePlayerModel(player2);

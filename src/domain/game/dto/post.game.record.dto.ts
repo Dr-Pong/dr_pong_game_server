@@ -1,5 +1,6 @@
 import { eloChangeCulculator } from 'src/global/utils/util.elo';
 import { GameModel } from '../../factory/model/game.model';
+import { GameMode } from 'src/global/type/type.game.mode';
 
 export class PostGameRecordDto {
   player1: {
@@ -12,7 +13,7 @@ export class PostGameRecordDto {
     score: number;
     lpChange: number;
   };
-  mode: 'SFINAE' | 'NON-SFINAE';
+  mode: GameMode;
   type: 'ladder' | 'normal';
   startTime: Date;
   endTime: Date;

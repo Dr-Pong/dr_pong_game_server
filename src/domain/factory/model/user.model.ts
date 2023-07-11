@@ -25,7 +25,7 @@ export class UserModel {
     this.id = id;
     this.nickname = nickname;
     this.ladderPoint = ladderPoint;
-    this.socket = new Map();
+    this.socket = new Map<string, Socket>();
     this.invite = null;
     this.inviteList = new Map();
     this.status = USERSTATUS_NOT_IN_GAME;
