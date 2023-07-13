@@ -28,8 +28,8 @@ export class GameModel {
   constructor(player1: UserModel, player2: UserModel, mode: GameMode) {
     this.id = uuid();
     this.mode = mode;
-    this.player1 = new GamePlayerModel(player1.id, player1.nickname);
-    this.player2 = new GamePlayerModel(player2.id, player2.nickname);
+    this.player1 = new GamePlayerModel(player1);
+    this.player2 = new GamePlayerModel(player2);
     this.board = new GameBoard(
       +process.env.BOARD_WIDTH,
       +process.env.BOARD_HEIGHT,

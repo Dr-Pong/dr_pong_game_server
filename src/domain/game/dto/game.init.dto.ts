@@ -50,7 +50,5 @@ export class GameInitDto {
         ? user.id === game.player1.id
         : user.id === game.player2.id;
     this.round = game.round;
-    console.log('me', this.me);
-    console.log('opponent', this.opponent);
   }
 }

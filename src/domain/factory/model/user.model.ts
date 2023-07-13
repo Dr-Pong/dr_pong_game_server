@@ -10,7 +10,7 @@ export class UserModel {
   id: number;
   nickname: string;
   ladderPoint: number;
-  socket: Socket;
+  socket: Map<string, Socket>;
   invite: InviteModel;
   inviteList: Map<string, InviteModel>;
   status: UserStatusType;
@@ -25,9 +25,10 @@ export class UserModel {
     this.id = id;
     this.nickname = nickname;
     this.ladderPoint = ladderPoint;
-    this.socket = null;
+    this.socket = new Map();
     this.invite = null;
     this.inviteList = new Map();
     this.status = USERSTATUS_NOT_IN_GAME;
+    this.gameId = null;
   }
 }

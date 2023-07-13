@@ -19,6 +19,7 @@ import {
 } from 'src/global/type/type.user.status';
 import { GamePlayerModel } from '../factory/model/game-player.model';
 import { GameInitDto } from './dto/game.init.dto';
+import { Mutex } from 'async-mutex';
 
 @WebSocketGateway({ namespace: 'game' })
 export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
@@ -26,17 +27,23 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
     private readonly gameFactory: GameFactory,
     private readonly userFactory: UserFactory,
   ) {}
+  private mutex: Mutex = new Mutex();
   sockets: Map<string, number> = new Map();
 
   async handleConnection(@ConnectedSocket() socket: Socket) {
-    const user: UserModel = getUserFromSocket(socket, this.userFactory);
-    if (!user) {
-      console.log('user not found', socket.id);
-      socket.disconnect();
-      return;
+    const release = await this.mutex.acquire();
+    try {
+      const user: UserModel = getUserFromSocket(socket, this.userFactory);
+      if (!user) {
+        console.log('user not found', socket.id);
+        socket.disconnect();
+        return;
+      }
+      await this.setUserInFactory(user, socket);
+      await this.setUserInGame(user, socket);
+    } finally {
+      release();
     }
-    this.setUserInFactory(user, socket);
-    this.setUserInGame(user, socket);
   }
 
   handleDisconnect(@ConnectedSocket() socket: Socket) {
@@ -113,10 +120,12 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
     socket: Socket,
   ): Promise<void> {
     console.log('user connected', user.id, user.nickname);
-    if (user.socket?.id !== socket.id) {
-      user.socket?.disconnect();
+    if (user.socket['game']?.id !== socket.id) {
+      user.socket['game']?.disconnect();
+      this.userFactory.setSocket(user.id, 'game', null);
     }
     this.sockets.set(socket.id, user.id);
+    this.userFactory.setSocket(user.id, 'game', socket);
     this.userFactory.setStatus(user.id, USERSTATUS_IN_GAME);
 
     try {
@@ -142,7 +151,9 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
       game.player2.socket = socket;
     }
     this.sendGameInfo(user, game);
-    await this.gameFactory.start(game.id);
+    if (game.status === 'standby') {
+      this.gameFactory.start(game.id);
+    }
   }
 
   private async sendGameInfo(user: UserModel, game: GameModel): Promise<void> {
