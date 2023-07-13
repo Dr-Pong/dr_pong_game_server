@@ -139,7 +139,7 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
     try {
       await axios.patch(`${process.env.CHAT_URL}/users/state`, {
         userId: user.id,
-        state: USERSTATUS_IN_GAME,
+        gameId: user.gameId,
       });
     } catch (e) {
       console.log(e?.response?.data);
@@ -411,11 +411,11 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
     try {
       await axios.patch(`${process.env.CHAT_URL}/users/state`, {
         userId: game.player1.id,
-        state: USERSTATUS_NOT_IN_GAME,
+        gameId: null,
       });
       await axios.patch(`${process.env.CHAT_URL}/users/state`, {
         userId: game.player2.id,
-        state: USERSTATUS_NOT_IN_GAME,
+        gameId: null,
       });
     } catch (e) {
       console.log(e?.response?.data);
