@@ -7,7 +7,7 @@ import { GameModel } from '../factory/model/game.model';
 import { DeleteQueueDto } from './dto/delete.queue.dto';
 import { Cron } from '@nestjs/schedule';
 import { GameFactory } from '../factory/game.factory';
-import { QueueGateway } from './queue.gateway';
+import { QueueGateway } from '../gateway/queue.gateway';
 import { UserFactory } from '../factory/user.factory';
 
 @Injectable()

@@ -7,7 +7,7 @@ import {
 } from 'typeorm-transactional';
 import { User } from './user.entity';
 import { UserModel } from '../factory/model/user.model';
-import { PostGatewayUserDto } from './post.gateway.users.dto';
+import { PostGatewayUserDto } from './dto/post.gateway.users.dto';
 import { UserRepository } from './user.repository';
 
 @Injectable()

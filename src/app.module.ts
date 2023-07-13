@@ -14,6 +14,7 @@ import { UserController } from './domain/user/user.controller';
 import { UserModule } from './domain/user/user.module';
 import { User } from './domain/user/user.entity';
 import { UserRepository } from './domain/user/user.repository';
+import { GatewayModule } from './domain/gateway/gateway.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { UserRepository } from './domain/user/user.repository';
     ScheduleModule.forRoot(),
     QueueModule,
     UserModule,
+    GatewayModule,
     TypeOrmModule.forFeature([User]),
   ],
   controllers: [AppController, UserController],
