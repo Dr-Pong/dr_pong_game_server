@@ -9,19 +9,23 @@ export class GamePosUpdateDto {
 
   constructor(game: GameModel, userId: number) {
     if (game.player1.id === userId) {
-      this.ballPos = { x: game.ball.x, y: game.ball.y };
+      this.ballPos = {
+        x: game.ball.x / game.board.width,
+        y: game.ball.y / game.board.height,
+      };
       this.playerXPos = {
-        me: game.player1.bar.position,
-        opponent: game.player2.bar.position,
+        me: game.player1.bar.position / game.board.width,
+        opponent: game.player2.bar.position / game.board.width,
       };
     } else {
       this.ballPos = {
-        x: +process.env.BOARD_WIDTH - game.ball.x,
-        y: +process.env.BOARD_HEIGHT - game.ball.y,
+        x: (game.board.width - game.ball.x) / game.board.width,
+        y: (game.board.height - game.ball.y) / game.board.height,
       };
       this.playerXPos = {
-        me: +process.env.BOARD_WIDTH - game.player2.bar.position,
-        opponent: +process.env.BOARD_WIDTH - game.player1.bar.position,
+        me: (game.board.width - game.player2.bar.position) / game.board.width,
+        opponent:
+          (game.board.width - game.player1.bar.position) / game.board.width,
       };
     }
   }

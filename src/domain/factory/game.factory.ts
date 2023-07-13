@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { GameModel } from './model/game.model';
-import { UserFactory } from './user.factory';
 import { Bar } from './objects/bar';
 import { GamePlayerModel } from './model/game-player.model';
 import { Ball } from './objects/ball';
@@ -10,6 +9,9 @@ import { PostGameRecordDto } from '../game/dto/post.game.record.dto';
 import { USERSTATUS_NOT_IN_GAME } from 'src/global/type/type.user.status';
 import { GamePosUpdateDto } from '../game/dto/game.pos.update.dto';
 import { GameRoundUpdateDto } from '../game/dto/game.round.update.dto';
+import { sleep } from '../../global/utils/sleep';
+import { UserFactory } from './user.factory';
+import { UserModel } from './model/user.model';
 
 @Injectable()
 export class GameFactory {
@@ -38,18 +40,16 @@ export class GameFactory {
     }
   }
 
-  start(gameId: string): void {
+  async start(gameId: string): Promise<void> {
     const game: GameModel = this.findById(gameId);
     if (!game.player1.isReady || !game.player2.isReady) {
       return;
     }
-    console.log('game start', game);
-    setTimeout(() => {
-      if (game.status !== 'end') {
-        game.status = 'playing';
-        this.gameLoop(game);
-      }
-    }, 3000);
+    await this.sendStartTimer(game);
+    if (game.status !== 'playing') {
+      game.status = 'playing';
+      this.gameLoop(game);
+    }
   }
 
   async gameLoop(game: GameModel): Promise<void> {
@@ -58,7 +58,7 @@ export class GameFactory {
     }
     this.move(game);
     this.handleTouchEvent(game);
-    this.handleGoal(game);
+    await this.handleGoal(game);
     this.sendPositionUpdate(game);
     setTimeout(() => {
       this.gameLoop(game);
@@ -69,6 +69,7 @@ export class GameFactory {
     game.ball.move();
     game.player1.bar.move();
     game.player2.bar.move();
+    console.log({ x: game.ball.x, y: game.ball.y });
   }
 
   handleTouchEvent(game: GameModel): void {
@@ -82,20 +83,32 @@ export class GameFactory {
     const ball: Ball = game.ball;
 
     // user2 바 체크
-    if (player.id === game.player2.id && this.isBallTouchingBar(ball, bar, 0)) {
-      this.handleBallTouchingBar(game, ball, player, ball.size / 2);
-    }
-
-    //  user1 바 체크
     if (
-      player.id === game.player1.id &&
-      this.isBallTouchingBar(ball, bar, game.board.height)
+      player.id === game.player2.id &&
+      this.isBallTouchingBar(ball, bar, 1.5 / +process.env.BOARD_HEIGHT)
     ) {
       this.handleBallTouchingBar(
         game,
         ball,
         player,
-        game.board.height - ball.size / 2,
+        1.5 / game.board.height + ball.size / 2,
+      );
+    }
+
+    //  user1 바 체크
+    if (
+      player.id === game.player1.id &&
+      this.isBallTouchingBar(
+        ball,
+        bar,
+        game.board.height - 1.5 / game.board.height,
+      )
+    ) {
+      this.handleBallTouchingBar(
+        game,
+        ball,
+        player,
+        game.board.height - 1.5 / game.board.height - ball.size / 2,
       );
     }
   }
@@ -114,7 +127,7 @@ export class GameFactory {
     }
   }
 
-  handleGoal(game: GameModel): void {
+  async handleGoal(game: GameModel): Promise<void> {
     const ball: Ball = game.ball;
     const player1Win: boolean = ball.y - ball.size / 2 < 0;
 
@@ -142,7 +155,8 @@ export class GameFactory {
       return;
     }
     if (player1Win || player2Win) {
-      this.resetGame(game);
+      await sleep(1);
+      await this.resetGame(game);
     }
   }
 
@@ -154,16 +168,18 @@ export class GameFactory {
     );
   }
 
-  resetGame(game: GameModel): void {
+  async resetGame(game: GameModel): Promise<void> {
     game.status = 'standby';
     game.ball.reset(game.round % 2 === 0 ? 1 : -1);
+    console.log('game.ball', {
+      vector: { x: game.ball.direction.x, y: game.ball.direction.y },
+      vectorSize: game.ball.direction.x ** 2 + game.ball.direction.y ** 2,
+    });
     game.player1.bar.reset();
     game.player2.bar.reset();
     game.pastBallPosition = [];
-    setTimeout(() => {
-      game.status = 'playing';
-      this.gameLoop(game);
-    }, 2000);
+    await this.sendStartTimer(game);
+    game.status = 'playing';
   }
 
   sendPositionUpdate(game: GameModel): void {
@@ -248,6 +264,44 @@ export class GameFactory {
     } catch (e) {
       console.log(e?.response?.data);
     }
+    this.sendGameEnd(game);
+    const player1: UserModel = this.userFactory.findById(game.player1.id);
+    const player2: UserModel = this.userFactory.findById(game.player2.id);
+    player1.gameId = null;
+    player2.gameId = null;
+    this.games.delete(game.id);
+  }
+
+  private sendGameEnd(game: GameModel): void {
+    let player1Result =
+      game.player1.score > game.player2.score ? 'win' : 'lose';
+    let player2Result =
+      game.player1.score < game.player2.score ? 'win' : 'lose';
+    if (game.player1.score === game.player2.score) {
+      player1Result = 'tie';
+      player2Result = 'tie';
+    }
+
+    game.player1.socket?.emit('gameEnd', { result: player1Result });
+    game.player2.socket?.emit('gameEnd', { result: player2Result });
+  }
+
+  private async sendStartTimer(game: GameModel): Promise<void> {
+    for (let i = 0; i <= +process.env.GAME_START_DELAY; i++) {
+      game.player1.socket?.emit('time', {
+        time: +process.env.GAME_START_DELAY - i,
+      });
+      game.player2.socket?.emit('time', {
+        time: +process.env.GAME_START_DELAY - i,
+      });
+      await sleep(1);
+    }
+    game.player1.socket?.emit('time', {
+      time: -1,
+    });
+    game.player2.socket?.emit('time', {
+      time: -1,
+    });
   }
 
   private isBallTouchingBar(ball: Ball, bar: Bar, yPosition: number): boolean {
@@ -255,7 +309,7 @@ export class GameFactory {
     const barRight: number = bar.position + bar.width / 2;
 
     // 위쪽과 아래쪽을 체크
-    if (yPosition === 0)
+    if (yPosition === 1.5 / +process.env.BOARD_HEIGHT)
       return (
         ball.y - ball.size / 2 <= yPosition &&
         ball.x >= barLeft &&

@@ -85,14 +85,14 @@ export class QueueFactory {
   isIn(userId: number): boolean {
     let ladderQueue: List<LadderQueueUser> = this.ladderQueue.head;
     while (ladderQueue) {
-      if (ladderQueue.data.userId === userId) {
+      if (ladderQueue.data?.userId === userId) {
         return true;
       }
       ladderQueue = ladderQueue.next;
     }
     let normalQueue: List<NormalQueueUser> = this.normalQueue.head;
     while (normalQueue) {
-      if (normalQueue.data.userId === userId) {
+      if (normalQueue.data?.userId === userId) {
         return true;
       }
       normalQueue = normalQueue.next;
