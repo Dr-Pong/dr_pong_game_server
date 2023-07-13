@@ -1,5 +1,3 @@
-import { Ball } from './ball';
-
 export class GameBoard {
   width: number;
   height: number;

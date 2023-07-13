@@ -32,13 +32,13 @@ export class GameController {
     private readonly userFactory: UserFactory,
   ) {}
 
-  @Post('/invitation/:nickname')
+  @Post('/invitation')
   @UseGuards(AuthGuard('jwt'))
   async gameInvitePost(
     @Requestor() requestor: UserIdCardDto,
-    @Param('nickname') nickname: string,
-    @Body('mode') mode: GameMode,
+    @Body() body: { nickname: string; mode: GameMode },
   ): Promise<void> {
+    const { nickname, mode } = body;
     const { id: userId } = requestor;
     const { id: targetId } = this.userFactory.findByNickname(nickname);
     const postDto = new PostGameInviteDto(userId, targetId, mode);

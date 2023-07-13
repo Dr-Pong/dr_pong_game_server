@@ -92,6 +92,11 @@ export class Ball {
     this.speed *= this.elasticity * bar.elasticity;
   }
 
+  randomBounce(): void {
+    this.direction.x = new Vector(randomInt(-5, 5), 1).normalize().x;
+    this.direction.normalize();
+  }
+
   setPosition(x: number, y: number): void {
     this.x = x;
     this.y = y;

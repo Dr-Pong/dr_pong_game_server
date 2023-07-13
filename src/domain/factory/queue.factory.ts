@@ -9,6 +9,10 @@ import { NormalQueueUser } from './model/normal-queue.user';
 import { LadderQueue } from '../queue/utils/ladder.queue';
 import { NormalQueue } from '../queue/utils/normal.queue';
 import { GameFactory } from './game.factory';
+import {
+  GAMETYPE_LADDER,
+  GAMETYPE_NORMAL,
+} from 'src/global/type/type.game.type';
 
 @Injectable()
 export class QueueFactory {
@@ -43,7 +47,7 @@ export class QueueFactory {
         this.normalQueue.delete(user2.id);
 
         const game: GameModel = this.gameFactory.create(
-          new GameModel(user1, user2, tmp.data.gameMode),
+          new GameModel(user1, user2, GAMETYPE_NORMAL, tmp.data.gameMode),
         );
         this.userFactory.setGameId(user1.id, game.id);
         this.userFactory.setGameId(user2.id, game.id);
@@ -67,7 +71,7 @@ export class QueueFactory {
         this.ladderQueue.delete(user2.id);
 
         const game: GameModel = this.gameFactory.create(
-          new GameModel(user1, user2, GAMEMODE_CLASSIC),
+          new GameModel(user1, user2, GAMETYPE_LADDER, GAMEMODE_CLASSIC),
         );
         this.userFactory.setGameId(user1.id, game.id);
         this.userFactory.setGameId(user2.id, game.id);

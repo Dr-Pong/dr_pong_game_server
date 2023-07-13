@@ -14,6 +14,7 @@ import {
   validateUser,
 } from './validation/errors.game';
 import { GameInviteAcceptResponseDto } from './dto/game.invite.accept.response.dto';
+import { GAMETYPE_NORMAL } from 'src/global/type/type.game.type';
 
 @Injectable()
 export class GameService {
@@ -53,6 +54,7 @@ export class GameService {
     const game: GameModel = new GameModel(
       sendUser,
       acceptUser,
+      GAMETYPE_NORMAL,
       invitation.mode,
     );
     this.userFactory.setGameId(sendUser.id, game.id);

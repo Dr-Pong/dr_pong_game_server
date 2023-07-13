@@ -21,7 +21,7 @@ export class Bar {
     this.direction = 'stop';
     this.mode = 'normal';
     this.elasticity = 1;
-    this.friction = randomInt(10, 15) / 30; // 0.5 ~ 1.5
+    this.friction = randomInt(60, 100) / 30; // 0.5 ~ 1.5
   }
 
   reset(): void {
