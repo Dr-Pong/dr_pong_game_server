@@ -9,6 +9,7 @@ import { Cron } from '@nestjs/schedule';
 import { GameFactory } from '../factory/game.factory';
 import { QueueGateway } from '../gateway/queue.gateway';
 import { UserFactory } from '../factory/user.factory';
+import axios from 'axios';
 
 @Injectable()
 export class QueueService {
@@ -34,7 +35,14 @@ export class QueueService {
 
     try {
       if (type === GAMETYPE_LADDER) {
-        this.queueFactory.addLadderQueue(userId);
+        try {
+          const response = await axios.get(
+            process.env.WEB_URL + '/users/' + userId + '/ranks/current',
+          );
+          this.queueFactory.addLadderQueue(userId, response.data.lp);
+        } catch (error) {
+          throw new BadRequestException('Error getting rank');
+        }
       } else {
         this.queueFactory.addNormalQueue(userId, mode);
       }
