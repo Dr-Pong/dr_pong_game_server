@@ -18,15 +18,15 @@ import {
   USERSTATUS_NOT_IN_GAME,
 } from 'src/global/type/type.user.status';
 import { GamePlayerModel } from '../factory/model/game-player.model';
-import { GameInitDto } from './dto/game.init.dto';
+import { GameInitDto } from '../game/dto/game.init.dto';
 import { Mutex } from 'async-mutex';
 import { Bar } from '../factory/objects/bar';
 import { GameLog } from '../factory/model/game.log';
 import { Ball } from '../factory/objects/ball';
 import { sleep } from 'src/global/utils/sleep';
-import { GamePosUpdateDto } from './dto/game.pos.update.dto';
-import { GameRoundUpdateDto } from './dto/game.round.update.dto';
-import { PostGameRecordDto } from './dto/post.game.record.dto';
+import { GamePosUpdateDto } from '../game/dto/game.pos.update.dto';
+import { GameRoundUpdateDto } from '../game/dto/game.round.update.dto';
+import { PostGameRecordDto } from '../game/dto/post.game.record.dto';
 import { GAMEMODE_RANDOMBOUNCE } from 'src/global/type/type.game.mode';
 
 @WebSocketGateway({ namespace: 'game' })
