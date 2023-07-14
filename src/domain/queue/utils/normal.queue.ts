@@ -22,10 +22,10 @@ export class NormalQueue {
     /**
      * 자신과 같은 모드의 유저를 찾아서 그 뒤에 새로운 노드를 삽입한다.
      */
-    while (tmp.next && tmp?.data?.gameMode !== user.gameMode) {
+    while (tmp.next?.data && tmp?.data?.gameMode !== user.gameMode) {
       tmp = tmp.next;
     }
-    while (tmp.next && tmp.next.data?.gameMode === user.gameMode) {
+    while (tmp.next?.data && tmp.next.data?.gameMode === user.gameMode) {
       tmp = tmp.next;
     }
     newNode.next = tmp.next;

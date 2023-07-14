@@ -48,8 +48,8 @@ export class GameService {
     const { userId, inviteId } = postDto;
     const acceptUser = this.userFactory.findById(userId);
     const invitation: InviteModel = acceptUser.inviteList.get(inviteId);
-    const sendUser = this.userFactory.findById(invitation.senderId);
     validateInvite(invitation);
+    const sendUser = this.userFactory.findById(invitation.senderId);
     this.deleteGameInvite({ senderId: invitation.senderId });
     const game: GameModel = new GameModel(
       sendUser,
