@@ -8,7 +8,7 @@ import { UserFactory } from '../factory/user.factory';
 import { QueueFactory } from '../factory/queue.factory';
 import { Socket } from 'socket.io';
 import { UserModel } from '../factory/model/user.model';
-import { getUserFromSocket } from '../game/game.gateway';
+import { getUserFromSocket } from './game.gateway';
 import { Mutex } from 'async-mutex';
 
 @WebSocketGateway({ namespace: '/' })
@@ -41,6 +41,7 @@ export class QueueGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   async handleDisconnect(@ConnectedSocket() socket: Socket) {
     const userId: number = this.sockets.get(socket.id);
+    this.queueFactory.delete(userId);
     this.userFactory.setSocket(userId, 'queue', null);
     this.sockets.delete(socket.id);
   }

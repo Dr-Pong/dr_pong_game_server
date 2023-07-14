@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
 import { QueueService } from './queue.service';
 import { FactoryModule } from '../factory/factory.module';
-import { QueueGateway } from './queue.gateway';
+import { GatewayModule } from '../gateway/gateway.module';
 
 @Module({
-  imports: [FactoryModule],
-  providers: [QueueService, QueueGateway],
-  exports: [QueueService, QueueGateway],
+  imports: [FactoryModule, GatewayModule],
+  providers: [QueueService],
+  exports: [QueueService],
 })
 export class QueueModule {}

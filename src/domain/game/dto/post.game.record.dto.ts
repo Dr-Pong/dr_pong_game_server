@@ -1,6 +1,7 @@
 import { eloChangeCulculator } from 'src/global/utils/util.elo';
 import { GameModel } from '../../factory/model/game.model';
 import { GameMode } from 'src/global/type/type.game.mode';
+import { GAMETYPE_LADDER } from 'src/global/type/type.game.type';
 
 export class PostGameRecordDto {
   player1: {
@@ -30,16 +31,26 @@ export class PostGameRecordDto {
   }[];
 
   constructor(game: GameModel) {
-    const player1LpChange = eloChangeCulculator(
-      game.player1.ladderPoint,
-      game.player2.ladderPoint,
-      game.player1.score > game.player2.score,
-    );
-    const player2LpChange = eloChangeCulculator(
-      game.player2.ladderPoint,
-      game.player1.ladderPoint,
-      game.player2.score > game.player1.score,
-    );
+    let player1LpChange: number;
+    let player2LpChange: number;
+
+    if (game.type === GAMETYPE_LADDER) {
+      player1LpChange = eloChangeCulculator(
+        game.player1.ladderPoint,
+        game.player2.ladderPoint,
+        game.player1.score > game.player2.score,
+        game.player1.score === game.player2.score,
+      );
+      player2LpChange = eloChangeCulculator(
+        game.player2.ladderPoint,
+        game.player1.ladderPoint,
+        game.player2.score > game.player1.score,
+        game.player2.score === game.player1.score,
+      );
+    } else {
+      player1LpChange = 0;
+      player2LpChange = 0;
+    }
 
     this.player1 = {
       id: game.player1.id,
