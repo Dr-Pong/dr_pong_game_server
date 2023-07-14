@@ -21,7 +21,7 @@ export class QueueFactory {
     private readonly gameFactory: GameFactory,
   ) {}
   ladderQueue: LadderQueue = new LadderQueue();
-  private normalQueue: NormalQueue = new NormalQueue();
+  normalQueue: NormalQueue = new NormalQueue();
   static i = 0;
 
   addLadderQueue(userId: number): void {
@@ -126,17 +126,6 @@ function isMatchableElo(
       (user2MaxMatchPoint - user1MinMatchPoint) >=
     0
   ) {
-    // 테스트로 만들기 어려워서 일단 이걸로 대체해놨어요.. 나중에 리팩토링 하겠습니다.
-    console.log(
-      'match info:',
-      ++QueueFactory.i,
-      'user' + user1.userId.toString(),
-      ':',
-      user1.ladderPoint,
-      'user' + user2.userId.toString(),
-      ':',
-      user2.ladderPoint,
-    );
     return true;
   }
   return false;

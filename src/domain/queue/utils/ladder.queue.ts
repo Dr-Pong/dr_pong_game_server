@@ -52,12 +52,4 @@ export class LadderQueue {
       this.size--;
     }
   }
-
-  print(): void {
-    let tmp: List<LadderQueueUser> = this.head;
-    while (tmp) {
-      console.log(tmp.data);
-      tmp = tmp.next;
-    }
-  }
 }
