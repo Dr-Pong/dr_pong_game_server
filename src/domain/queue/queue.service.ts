@@ -39,6 +39,7 @@ export class QueueService {
           const response = await axios.get(
             process.env.WEB_URL + '/users/' + userId + '/ranks/current',
           );
+          this.userFactory.setLadderPoint(userId, response.data.lp);
           this.queueFactory.addLadderQueue(userId, response.data.lp);
         } catch (error) {
           throw new BadRequestException('Error getting rank');

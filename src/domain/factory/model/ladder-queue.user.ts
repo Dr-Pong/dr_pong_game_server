@@ -1,5 +1,3 @@
-import { UserModel } from './user.model';
-
 export class LadderQueueUser {
   userId: number;
   ladderPoint: number;

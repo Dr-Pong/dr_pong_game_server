@@ -37,6 +37,11 @@ export class UserFactory {
     user.gameId = gameId;
   }
 
+  setLadderPoint(userId: number, ladderPoint: number): void {
+    const user: UserModel = this.findById(userId);
+    user.ladderPoint = ladderPoint;
+  }
+
   invite(senderId: number, receiverId: number, invite: InviteModel): void {
     const sender: UserModel = this.findById(senderId);
     const receiver: UserModel = this.findById(receiverId);
