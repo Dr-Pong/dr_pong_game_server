@@ -46,12 +46,10 @@ describe('GameController', () => {
         const token = await userData.giveTokenToUser(user);
         const mode: GameMode = GAMEMODE_CLASSIC;
 
-        const response = await req(
-          token,
-          'POST',
-          `/games/invitation/${target.nickname}`,
-          { mode },
-        );
+        const response = await req(token, 'POST', `/games/invitation`, {
+          mdoe: mode,
+          nickname: target.nickname,
+        });
 
         expect(response.status).toBe(201);
       });
@@ -61,16 +59,15 @@ describe('GameController', () => {
         const target: UserModel = await userData.createUser('target');
         const token = await userData.giveTokenToUser(user);
         const mode: GameMode = GAMEMODE_CLASSIC;
-        await req(token, 'POST', `/games/invitation/${target.nickname}`, {
-          mode,
+        await req(token, 'POST', `/games/invitation`, {
+          mdoe: mode,
+          nickname: target.nickname,
         });
 
-        const response = await req(
-          token,
-          'POST',
-          `/games/invitation/${target.nickname}`,
-          { mode },
-        );
+        const response = await req(token, 'POST', `/games/invitation`, {
+          mdoe: mode,
+          nickname: target.nickname,
+        });
 
         expect(response.status).toBe(400);
       });
@@ -80,13 +77,10 @@ describe('GameController', () => {
         const token = await userData.giveTokenToUser(user);
         const mode: GameMode = GAMEMODE_CLASSIC;
 
-        const response = await req(
-          token,
-          'POST',
-          `/games/invitation/${user.nickname}`,
-          { mode },
-        );
-
+        const response = await req(token, 'POST', `/games/invitation`, {
+          mdoe: mode,
+          nickname: user.nickname,
+        });
         expect(response.status).toBe(400);
       });
     });
