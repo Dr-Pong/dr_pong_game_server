@@ -1,27 +1,35 @@
+import { BadRequestException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { randomInt } from 'crypto';
 import { typeORMConfig } from 'src/configs/typeorm.config';
 import { FactoryModule } from 'src/domain/factory/factory.module';
+import { GameFactory } from 'src/domain/factory/game.factory';
+import { GameModel } from 'src/domain/factory/model/game.model';
 import { UserModel } from 'src/domain/factory/model/user.model';
 import { QueueFactory } from 'src/domain/factory/queue.factory';
 import { UserFactory } from 'src/domain/factory/user.factory';
 import { QueueModule } from 'src/domain/queue/queue.module';
 import { QueueService } from 'src/domain/queue/queue.service';
-import { GAMEMODE_CLASSIC } from 'src/global/type/type.game.mode';
-import { GAMETYPE_LADDER } from 'src/global/type/type.game.type';
+import { LadderQueue } from 'src/domain/queue/utils/ladder.queue';
+import { NormalQueue } from 'src/domain/queue/utils/normal.queue';
+import {
+  GAMEMODE_CLASSIC,
+  GAMEMODE_RANDOMBOUNCE,
+} from 'src/global/type/type.game.mode';
+import {
+  GAMETYPE_LADDER,
+  GAMETYPE_NORMAL,
+} from 'src/global/type/type.game.type';
 import { UserTestData } from 'src/test/data/user.test.data';
 import { TestDataModule } from 'src/test/test.data.module';
 import { DataSource } from 'typeorm';
 import { addTransactionalDataSource } from 'typeorm-transactional';
-function sleep(sec) {
-  return new Promise((resolve) => setTimeout(resolve, sec * 1000));
-} // 함수정의
 
 describe('QueueService', () => {
   let service: QueueService;
   let userFactory: UserFactory;
   let queueFactory: QueueFactory;
+  let gameFactory: GameFactory;
   let dataSource: DataSource;
   let userData: UserTestData;
 
@@ -50,6 +58,7 @@ describe('QueueService', () => {
     service = module.get<QueueService>(QueueService);
     userFactory = module.get<UserFactory>(UserFactory);
     queueFactory = module.get<QueueFactory>(QueueFactory);
+    gameFactory = module.get<GameFactory>(GameFactory);
     dataSource = module.get<DataSource>(DataSource);
     userData = module.get<UserTestData>(UserTestData);
   });
@@ -57,70 +66,302 @@ describe('QueueService', () => {
   afterEach(async () => {
     userData.clear();
     userFactory.users.clear();
+    while (queueFactory.ladderQueue.size > 0) {
+      queueFactory.ladderQueue.delete(
+        queueFactory.ladderQueue.head.data.userId,
+      );
+    }
+    while (queueFactory.normalQueue.size > 0) {
+      queueFactory.normalQueue.delete(
+        queueFactory.normalQueue.head.data.userId,
+      );
+    }
+    gameFactory.games.clear();
   });
 
   afterAll(async () => {
     await dataSource.destroy();
-    await dataSource.dropDatabase();
   });
 
   describe('큐 입장 테스트', () => {
     it('[Valid Case] 래더 큐 입장', async () => {
-      for (let i = 0; i < 51; i++) {
-        const user: UserModel = await userData.createUserWithLp(
-          'user' + (i * 2).toString(),
-          randomInt(500, 1500),
-        );
-        await service.postQueue({
-          userId: user.id,
-          type: GAMETYPE_LADDER,
+      const user1: UserModel = await userData.createUserWithLp('user1', 1000);
+      await service.postQueue({
+        userId: user1.id,
+        type: GAMETYPE_LADDER,
+        mode: GAMEMODE_CLASSIC,
+      });
+
+      const queue: LadderQueue = queueFactory.ladderQueue;
+
+      expect(queue.size).toBe(1);
+      const tmp = queue.head;
+      expect(tmp.data.userId).toBe(user1.id);
+      const user2: UserModel = await userData.createUserWithLp('user2', 1000);
+      await service.postQueue({
+        userId: user2.id,
+        type: GAMETYPE_LADDER,
+        mode: GAMEMODE_CLASSIC,
+      });
+      expect(queue.size).toBe(2);
+      expect(tmp.next.data.userId).toBe(user2.id);
+
+      const user3: UserModel = await userData.createUserWithLp('user3', 950);
+
+      await service.postQueue({
+        userId: user3.id,
+        type: GAMETYPE_LADDER,
+        mode: GAMEMODE_CLASSIC,
+      });
+
+      expect(queue.size).toBe(3);
+      expect(queue.head.data.userId).toBe(user3.id);
+    });
+
+    it('[Valid Case] 일반 큐 입장', async () => {
+      const user1: UserModel = await userData.createUserWithLp('user1', 1000);
+      await service.postQueue({
+        userId: user1.id,
+        type: GAMETYPE_NORMAL,
+        mode: GAMEMODE_CLASSIC,
+      });
+
+      const queue: NormalQueue = queueFactory.normalQueue;
+
+      expect(queue.size).toBe(1);
+      const tmp = queue.head;
+      expect(tmp.data.userId).toBe(user1.id);
+      const user2: UserModel = await userData.createUserWithLp('user2', 1000);
+      await service.postQueue({
+        userId: user2.id,
+        type: GAMETYPE_NORMAL,
+        mode: GAMEMODE_CLASSIC,
+      });
+      expect(queue.size).toBe(2);
+      expect(tmp.next.data.userId).toBe(user2.id);
+
+      const user3: UserModel = await userData.createUserWithLp('user3', 950);
+
+      await service.postQueue({
+        userId: user3.id,
+        type: GAMETYPE_NORMAL,
+        mode: GAMEMODE_CLASSIC,
+      });
+
+      expect(queue.size).toBe(3);
+      expect(tmp.next.next.data.userId).toBe(user3.id);
+    });
+
+    it('[Error Case] 이미 큐에 있는 유저가 다시 큐에 들어감', async () => {
+      const user1: UserModel = await userData.createUserWithLp('user1', 1000);
+      await service.postQueue({
+        userId: user1.id,
+        type: GAMETYPE_NORMAL,
+        mode: GAMEMODE_CLASSIC,
+      });
+
+      expect(async () =>
+        service.postQueue({
+          userId: user1.id,
+          type: GAMETYPE_NORMAL,
           mode: GAMEMODE_CLASSIC,
-        });
-      }
-      queueFactory.ladderQueue.print();
+        }),
+      ).rejects.toThrowError(new BadRequestException('Already in queue'));
+    });
 
-      for (let i = 0; i < 100; i++) {
-        await sleep(1);
-        console.log(
-          i.toString() + '초 경과',
-          '남은 인원: ',
-          queueFactory.ladderQueue.size,
-        );
-        await service.matching();
-        if (i % 2 == 0) {
-          const user: UserModel = await userData.createUserWithLp(
-            'user' + (i * 2 + 1).toString(),
-            randomInt(500, 1500),
-          );
-          console.log('new user: ', user.id, 'lp: ', user.ladderPoint);
-          await service.postQueue({
-            userId: user.id,
-            type: GAMETYPE_LADDER,
-            mode: GAMEMODE_CLASSIC,
-          });
-        }
-        if (queueFactory.ladderQueue.size === 0) break;
-      }
-    }, 1000000);
+    it('[Error Case] 게임중인 유저가 다시 큐에 들어감', async () => {
+      const user1: UserModel = await userData.createUserWithLp('user1', 1000);
+      userFactory.setGameId(user1.id, '1');
 
-    it.only('[Valid Case] 게임 간단', async () => {
-      for (let i = 0; i < 2; i++) {
-        const user: UserModel = await userData.createUserWithLp(
-          'user' + (i * 2).toString(),
-          randomInt(999, 1000),
-        );
-        await service.postQueue({
-          userId: user.id,
-          type: GAMETYPE_LADDER,
+      expect(async () =>
+        service.postQueue({
+          userId: user1.id,
+          type: GAMETYPE_NORMAL,
           mode: GAMEMODE_CLASSIC,
-        });
-      }
+        }),
+      ).rejects.toThrowError(new BadRequestException('Already in game'));
+    });
+  });
 
-      await sleep(1);
-      await service.matching();
-      for (let i = 0; i < 100; i++) {
-        await sleep(1);
-      }
-    }, 100000000);
+  it('[Valid Case] 매칭 테스트(래더) - 게임 생성, 초기화 확인', async () => {
+    const user1: UserModel = await userData.createUserWithLp('user1', 1000);
+    const user2: UserModel = await userData.createUserWithLp('user2', 1000);
+    queueFactory.addLadderQueue(user1.id);
+    queueFactory.addLadderQueue(user2.id);
+
+    await service.matching();
+
+    const user1AfterMatched: UserModel = userFactory.users.get(user1.id);
+    const user2AfterMatched: UserModel = userFactory.users.get(user2.id);
+
+    const game: GameModel = gameFactory.findById(user1AfterMatched.gameId);
+
+    expect(queueFactory.ladderQueue.size).toBe(0);
+    expect(game).toBeDefined();
+    expect(user1AfterMatched.gameId).toBe(game.id);
+    expect(user2AfterMatched.gameId).toBe(game.id);
+    expect(game.type).toBe(GAMETYPE_LADDER);
+    expect(game.mode).toBe(GAMEMODE_CLASSIC);
+    expect(game.ball.size).toBe(+process.env.BALL_SIZE);
+    expect(game.board.width).toBe(+process.env.BOARD_WIDTH);
+    expect(game.board.height).toBe(+process.env.BOARD_HEIGHT);
+    expect(game.player1.id).toBe(user1.id);
+    expect(game.player2.id).toBe(user2.id);
+    expect(game.player1.isReady).toBe(false);
+    expect(game.player2.isReady).toBe(false);
+    expect(game.player1.score).toBe(0);
+    expect(game.player2.score).toBe(0);
+  });
+
+  it('[Valid Case] 매칭 테스트(래더) - 점수대별로 매칭 되는지', async () => {
+    const user1: UserModel = await userData.createUserWithLp('user1', 100);
+    const user2: UserModel = await userData.createUserWithLp('user2', 1000);
+    const user3: UserModel = await userData.createUserWithLp('user1', 120);
+    const user4: UserModel = await userData.createUserWithLp('user2', 1020);
+    queueFactory.addLadderQueue(user1.id);
+    queueFactory.addLadderQueue(user2.id);
+    queueFactory.addLadderQueue(user3.id);
+    queueFactory.addLadderQueue(user4.id);
+
+    await service.matching();
+
+    const user1AfterMatched: UserModel = userFactory.users.get(user1.id);
+    const game1: GameModel = gameFactory.findById(user1AfterMatched.gameId);
+
+    const user2AfterMatched: UserModel = userFactory.users.get(user2.id);
+    const game2: GameModel = gameFactory.findById(user2AfterMatched.gameId);
+
+    expect(queueFactory.ladderQueue.size).toBe(0);
+    expect(game1).toBeDefined();
+    expect(game1.player1.id).toBe(user1.id);
+    expect(game1.player2.id).toBe(user3.id);
+    expect(game2).toBeDefined();
+    expect(game2.player1.id).toBe(user2.id);
+    expect(game2.player2.id).toBe(user4.id);
+  });
+
+  it('[Valid Case] 매칭 테스트(일반) - 모드별로 매칭 되는지', async () => {
+    const user1: UserModel = await userData.createUserWithLp('user1', 1000);
+    const user2: UserModel = await userData.createUserWithLp('user2', 1000);
+    const user3: UserModel = await userData.createUserWithLp('user1', 1000);
+    const user4: UserModel = await userData.createUserWithLp('user2', 1000);
+
+    queueFactory.addNormalQueue(user1.id, GAMEMODE_CLASSIC);
+    queueFactory.addNormalQueue(user2.id, GAMEMODE_RANDOMBOUNCE);
+    queueFactory.addNormalQueue(user3.id, GAMEMODE_CLASSIC);
+    queueFactory.addNormalQueue(user4.id, GAMEMODE_RANDOMBOUNCE);
+
+    await service.matching();
+
+    const user1AfterMatched: UserModel = userFactory.users.get(user1.id);
+    const game1: GameModel = gameFactory.findById(user1AfterMatched.gameId);
+
+    const user2AfterMatched: UserModel = userFactory.users.get(user2.id);
+    const game2: GameModel = gameFactory.findById(user2AfterMatched.gameId);
+
+    expect(queueFactory.normalQueue.size).toBe(0);
+    expect(game1).toBeDefined();
+    expect(game1.player1.id).toBe(user1.id);
+    expect(game1.player2.id).toBe(user3.id);
+    expect(game1.mode).toBe(GAMEMODE_CLASSIC);
+    expect(game2).toBeDefined();
+    expect(game2.player1.id).toBe(user2.id);
+    expect(game2.player2.id).toBe(user4.id);
+    expect(game2.mode).toBe(GAMEMODE_RANDOMBOUNCE);
+  });
+
+  it('[Valid Case] 매칭 테스트(혼합) - 일반, 래더 각각 매칭 되는지', async () => {
+    const ladderUser1: UserModel = await userData.createUserWithLp(
+      'luser1',
+      990,
+    );
+    const ladderUser2: UserModel = await userData.createUserWithLp(
+      'luser2',
+      1030,
+    );
+    const ladderUser3: UserModel = await userData.createUserWithLp(
+      'luser3',
+      1020,
+    );
+    const ladderUser4: UserModel = await userData.createUserWithLp(
+      'luser4',
+      1000,
+    );
+    const normalUser1: UserModel = await userData.createUserWithLp(
+      'nuser1',
+      1000,
+    );
+    const normalUser2: UserModel = await userData.createUserWithLp(
+      'nuser2',
+      1000,
+    );
+    const normalUser3: UserModel = await userData.createUserWithLp(
+      'nuser3',
+      1000,
+    );
+    const normalUser4: UserModel = await userData.createUserWithLp(
+      'nuser4',
+      1000,
+    );
+
+    queueFactory.addLadderQueue(ladderUser1.id);
+    queueFactory.addNormalQueue(normalUser4.id, GAMEMODE_RANDOMBOUNCE);
+    queueFactory.addLadderQueue(ladderUser4.id);
+    queueFactory.addNormalQueue(normalUser1.id, GAMEMODE_CLASSIC);
+    queueFactory.addLadderQueue(ladderUser2.id);
+    queueFactory.addNormalQueue(normalUser3.id, GAMEMODE_RANDOMBOUNCE);
+    queueFactory.addLadderQueue(ladderUser3.id);
+    queueFactory.addNormalQueue(normalUser2.id, GAMEMODE_CLASSIC);
+
+    await service.matching();
+
+    const ladderUser1AfterMatched: UserModel = userFactory.users.get(
+      ladderUser1.id,
+    );
+    const ladderGame1: GameModel = gameFactory.findById(
+      ladderUser1AfterMatched.gameId,
+    );
+
+    const ladderUser2AfterMatched: UserModel = userFactory.users.get(
+      ladderUser2.id,
+    );
+
+    const ladderGame2: GameModel = gameFactory.findById(
+      ladderUser2AfterMatched.gameId,
+    );
+
+    const normalUser1AfterMatched: UserModel = userFactory.users.get(
+      normalUser1.id,
+    );
+
+    const normalGame1: GameModel = gameFactory.findById(
+      normalUser1AfterMatched.gameId,
+    );
+
+    const normalUser3AfterMatched: UserModel = userFactory.users.get(
+      normalUser3.id,
+    );
+
+    const normalGame2: GameModel = gameFactory.findById(
+      normalUser3AfterMatched.gameId,
+    );
+
+    expect(queueFactory.ladderQueue.size).toBe(0);
+    expect(queueFactory.normalQueue.size).toBe(0);
+    expect(ladderGame1).toBeDefined();
+    expect(ladderGame1.player1.id).toBe(ladderUser1.id);
+    expect(ladderGame1.player2.id).toBe(ladderUser4.id);
+    expect(ladderGame2).toBeDefined();
+    expect(ladderGame2.player1.id).toBe(ladderUser3.id);
+    expect(ladderGame2.player2.id).toBe(ladderUser2.id);
+
+    expect(normalGame1).toBeDefined();
+    expect(normalGame1.player1.id).toBe(normalUser1.id);
+    expect(normalGame1.player2.id).toBe(normalUser2.id);
+    expect(normalGame1.mode).toBe(GAMEMODE_CLASSIC);
+    expect(normalGame2).toBeDefined();
+    expect(normalGame2.player1.id).toBe(normalUser4.id);
+    expect(normalGame2.player2.id).toBe(normalUser3.id);
+    expect(normalGame2.mode).toBe(GAMEMODE_RANDOMBOUNCE);
   });
 });
