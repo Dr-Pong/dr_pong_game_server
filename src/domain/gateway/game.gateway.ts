@@ -150,6 +150,7 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
   private async setUserInGame(user: UserModel, socket: Socket) {
     const game: GameModel = this.gameFactory.findById(user.gameId);
     if (!game) {
+      socket.emit('endGame', {});
       socket.disconnect();
       return;
     }
@@ -387,13 +388,13 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
       game.player1.id === userId &&
       game.player1.bar.direction === direction
     ) {
-      game.player1.bar.direction = 'stop';
+      game.player1.bar.stop();
     }
     if (
       game.player2.id === userId &&
       game.player2.bar.direction !== direction
     ) {
-      game.player2.bar.direction = 'stop';
+      game.player2.bar.stop();
     }
   }
 

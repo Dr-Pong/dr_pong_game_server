@@ -82,12 +82,18 @@ export class Ball {
     if (bar.direction === 'left') {
       this.spinSpeed =
         this.spinSpeed +
-        (bar.speed * bar.friction - this.spinSpeed) / +process.env.GAME_FRAME;
+        ((bar.speed * bar.friction * bar.movedDistance) /
+          +process.env.BOARD_WIDTH -
+          this.spinSpeed) /
+          +process.env.GAME_FRAME;
     }
     if (bar.direction === 'right') {
       this.spinSpeed =
         this.spinSpeed -
-        (bar.speed * bar.friction - this.spinSpeed) / +process.env.GAME_FRAME;
+        ((bar.speed * bar.friction * bar.movedDistance) /
+          +process.env.BOARD_WIDTH -
+          this.spinSpeed) /
+          +process.env.GAME_FRAME;
     }
     this.speed *= this.elasticity * bar.elasticity;
   }
