@@ -12,5 +12,5 @@ export function eloChangeCulculator(
   if (change < 0) {
     change = change * 0.9;
   }
-  return change;
+  return Math.round(change);
 }
