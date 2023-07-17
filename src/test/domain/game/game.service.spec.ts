@@ -43,7 +43,6 @@ describe('GameService', () => {
         TestDataModule,
         FactoryModule,
         GameModule,
-        AuthModule,
       ],
     }).compile();
 
@@ -61,7 +60,6 @@ describe('GameService', () => {
 
   afterAll(async () => {
     await dataSource.destroy();
-    await dataSource.dropDatabase();
   });
 
   describe('게임 초대', () => {
