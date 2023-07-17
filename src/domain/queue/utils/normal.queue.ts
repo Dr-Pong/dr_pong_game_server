@@ -1,4 +1,4 @@
-import { NormalQueueUser } from 'src/domain/factory/model/normal-queue.user';
+import { NormalQueueUser } from 'src/domain/queue/utils/normal-queue.user';
 import { List } from 'src/global/utils/list';
 
 export class NormalQueue {
