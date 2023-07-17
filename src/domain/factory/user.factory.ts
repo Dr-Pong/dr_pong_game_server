@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { UserModel } from './model/user.model';
 import { UserStatusType } from 'src/global/type/type.user.status';
-import { InviteModel } from './model/invite.model';
 import { Socket } from 'socket.io';
 
 @Injectable()
@@ -18,8 +17,9 @@ export class UserFactory {
     );
   }
 
-  create(user: UserModel): void {
+  create(user: UserModel): UserModel {
     this.users.set(user.id, user);
+    return user;
   }
 
   setStatus(userId: number, status: UserStatusType): void {
@@ -40,24 +40,5 @@ export class UserFactory {
   setLadderPoint(userId: number, ladderPoint: number): void {
     const user: UserModel = this.findById(userId);
     user.ladderPoint = ladderPoint;
-  }
-
-  invite(senderId: number, receiverId: number, invite: InviteModel): void {
-    const sender: UserModel = this.findById(senderId);
-    const receiver: UserModel = this.findById(receiverId);
-    receiver.inviteList.set(invite.id, invite);
-    sender.invite = invite;
-  }
-
-  getInvites(userId: number): InviteModel[] {
-    const user: UserModel = this.findById(userId);
-    return Array.from(user.inviteList.values());
-  }
-
-  deleteInvite(senderId: number, receiverId: number): void {
-    const sender: UserModel = this.findById(senderId);
-    const receiver: UserModel = this.findById(receiverId);
-    receiver.inviteList.delete(sender.invite.id);
-    sender.invite = null;
   }
 }
