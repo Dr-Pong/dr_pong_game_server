@@ -20,6 +20,8 @@ export class GameService {
     const gameId: string = this.gameFactory.create(
       new GameModel(user1, user2, type, mode),
     ).id;
+    this.userFactory.setGameId(user1.id, gameId);
+    this.userFactory.setGameId(user2.id, gameId);
     return { gameId };
   }
 }
