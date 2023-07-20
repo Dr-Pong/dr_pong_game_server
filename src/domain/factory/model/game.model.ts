@@ -18,6 +18,8 @@ export class GameModel {
   player2: GamePlayerModel;
   startTime: Date;
   endTime: Date;
+  playTime: number;
+  timer: number;
   board: GameBoard;
   ball: Ball;
   round: number;
@@ -34,6 +36,7 @@ export class GameModel {
     this.id = uuid();
     this.type = type;
     this.mode = mode;
+    this.playTime = 0;
     this.player1 = new GamePlayerModel(player1);
     this.player2 = new GamePlayerModel(player2);
     this.board = new GameBoard(

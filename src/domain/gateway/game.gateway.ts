@@ -201,6 +201,8 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
     if (game.status !== 'playing') {
       await this.sendStartTimer(game);
       game.status = 'playing';
+      game.startTime = new Date();
+      game.timer = Date.now();
       this.gameLoop(game);
     }
   }
@@ -213,9 +215,15 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
     this.handleTouchEvent(game);
     await this.handleGoal(game, game.ball);
     this.sendPositionUpdate(game);
+    this.setPlayTime(game);
     setTimeout(() => {
       this.gameLoop(game);
     }, 1000 / +process.env.GAME_FRAME);
+  }
+
+  setPlayTime(game: GameModel): void {
+    game.playTime += Date.now() - game.timer;
+    game.timer = Date.now();
   }
 
   move(game: GameModel): void {
@@ -312,10 +320,11 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   checkGameEnd(game: GameModel): boolean {
+    console.log(game.playTime, +process.env.GAME_TIME);
     return (
       game.player1.score === +process.env.GAME_FINISH_SCORE ||
       game.player2.score === +process.env.GAME_FINISH_SCORE ||
-      game.startTime.getTime() + +process.env.GAME_TIME < Date.now()
+      game.playTime >= +process.env.GAME_TIME
     );
   }
 
@@ -325,6 +334,7 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
     game.player2.bar.reset();
     game.pastBallPosition = [];
     await this.sendStartTimer(game);
+    game.timer = Date.now();
     game.status = 'playing';
   }
 
@@ -436,6 +446,7 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
     player2.gameId = null;
     player2.socket['game'] = null;
     this.gameFactory.delete(game.id);
+    console.log('game end', game.id);
   }
 
   private sendGameEnd(game: GameModel): void {
