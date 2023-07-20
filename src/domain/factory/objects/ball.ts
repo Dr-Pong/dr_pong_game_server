@@ -33,6 +33,7 @@ export class Ball {
   x: number; // 공의 x좌표
   y: number; // 공의 y좌표
   size: number; // 공의 반지름
+  beginSpeed: number; // 공의 초기 속도
   speed: number; // 공의 속도
   spinSpeed: number; // 공의 회전량 (-1 ~ 1). -1일 경우 반시계방향, 1일 경우 시계방향
   direction: Vector; // 공의 이동 방향
@@ -42,10 +43,11 @@ export class Ball {
     this.x = +process.env.BOARD_WIDTH / 2;
     this.y = +process.env.BOARD_HEIGHT / 2;
     this.size = size;
+    this.beginSpeed = speed;
     this.speed = speed;
     this.spinSpeed = 0;
     this.direction = new Vector(0, 1);
-    this.elasticity = 1;
+    this.elasticity = 1.02;
   }
 
   reset(direction: number): void {
@@ -54,6 +56,7 @@ export class Ball {
     this.direction = new Vector(-randomInt(0, 5), direction * randomInt(5, 10));
     this.direction = this.direction.normalize();
     this.spinSpeed = 0;
+    this.speed = this.beginSpeed;
   }
 
   move(): void {

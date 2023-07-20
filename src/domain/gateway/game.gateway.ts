@@ -136,10 +136,13 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
     this.userFactory.setSocket(user.id, 'game', socket);
     this.userFactory.setStatus(user.id, USERSTATUS_IN_GAME);
 
+    const game: GameModel = this.gameFactory.findById(user.gameId);
     try {
       await axios.patch(`${process.env.CHAT_URL}/users/state`, {
         userId: user.id,
-        gameId: user.gameId,
+        gameId: game?.id,
+        type: game?.type,
+        mode: game?.mode,
       });
     } catch (e) {
       console.log(e?.response?.data);
@@ -413,10 +416,14 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
       await axios.patch(`${process.env.CHAT_URL}/users/state`, {
         userId: game.player1.id,
         gameId: null,
+        type: null,
+        mode: null,
       });
       await axios.patch(`${process.env.CHAT_URL}/users/state`, {
         userId: game.player2.id,
         gameId: null,
+        type: null,
+        mode: null,
       });
     } catch (e) {
       console.log(e?.response?.data);

@@ -1,4 +1,4 @@
-export const GAMEMODE_CLASSIC = 'CLASSIC' as const;
-export const GAMEMODE_RANDOMBOUNCE = 'RANDOMBOUNCE' as const;
+export const GAMEMODE_CLASSIC = 'classic' as const;
+export const GAMEMODE_RANDOMBOUNCE = 'randomBounce' as const;
 
-export type GameMode = 'CLASSIC' | 'RANDOMBOUNCE';
+export type GameMode = 'classic' | 'randomBounce';
