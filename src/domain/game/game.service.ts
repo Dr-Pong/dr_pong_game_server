@@ -5,12 +5,14 @@ import { UserFactory } from '../factory/user.factory';
 import { UserModel } from '../factory/model/user.model';
 import { PostGameDto } from './dto/post.game.dto';
 import { PostGameResponseDto } from './dto/post.game.response.dto';
+import { QueueGateWay } from '../gateway/queue.gateway';
 
 @Injectable()
 export class GameService {
   constructor(
     private readonly userFactory: UserFactory,
     private readonly gameFactory: GameFactory,
+    private readonly queueGateway: QueueGateWay,
   ) {}
 
   async postGame(postDto: PostGameDto): Promise<PostGameResponseDto> {
@@ -22,6 +24,8 @@ export class GameService {
     ).id;
     this.userFactory.setGameId(user1.id, gameId);
     this.userFactory.setGameId(user2.id, gameId);
+    this.queueGateway.sendJoinGame(user1.id);
+    this.queueGateway.sendJoinGame(user2.id);
     return { gameId };
   }
 }

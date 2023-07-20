@@ -7,7 +7,7 @@ import { GameModel } from '../factory/model/game.model';
 import { DeleteQueueDto } from './dto/delete.queue.dto';
 import { Cron } from '@nestjs/schedule';
 import { GameFactory } from '../factory/game.factory';
-import { QueueGateway } from '../gateway/queue.gateway';
+import { QueueGateWay } from '../gateway/queue.gateway';
 import { UserFactory } from '../factory/user.factory';
 import axios from 'axios';
 
@@ -17,7 +17,7 @@ export class QueueService {
     private readonly userFactory: UserFactory,
     private readonly gameFactory: GameFactory,
     private readonly queueFactory: QueueFactory,
-    private readonly queueGateway: QueueGateway,
+    private readonly queueGateway: QueueGateWay,
   ) {}
   private mutex: Mutex = new Mutex();
 
