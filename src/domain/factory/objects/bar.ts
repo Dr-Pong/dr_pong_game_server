@@ -8,6 +8,7 @@ export class Bar {
   direction: 'left' | 'right' | 'stop';
   width: number;
   position: number;
+  movedDistance: number;
   mode: BarMode;
   // 탄성계수
   elasticity: number;
@@ -18,6 +19,7 @@ export class Bar {
     this.speed = speed;
     this.width = width;
     this.position = position;
+    this.movedDistance = 0;
     this.direction = 'stop';
     this.mode = 'normal';
     this.elasticity = 1;
@@ -26,6 +28,7 @@ export class Bar {
 
   reset(): void {
     this.direction = 'stop'; // 실제 쓸거
+    this.movedDistance = 0;
     this.position = +process.env.BOARD_WIDTH / 2;
   }
 
@@ -38,10 +41,16 @@ export class Bar {
     }
   }
 
+  stop(): void {
+    this.direction = 'stop';
+    this.movedDistance = 0;
+  }
+
   moveLeft(): void {
     this.position -= this.speed / +process.env.GAME_FRAME;
+    this.movedDistance += this.speed / +process.env.GAME_FRAME;
     if (this.position <= this.width / 2) {
-      this.direction = 'stop';
+      this.stop();
       this.position = this.width / 2;
       return;
     }
@@ -49,8 +58,9 @@ export class Bar {
 
   moveRight(): void {
     this.position += this.speed / +process.env.GAME_FRAME;
+    this.movedDistance += this.speed / +process.env.GAME_FRAME;
     if (this.position >= +process.env.BOARD_WIDTH - this.width / 2) {
-      this.direction = 'stop';
+      this.stop();
       this.position = +process.env.BOARD_WIDTH - this.width / 2;
       return;
     }

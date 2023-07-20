@@ -79,6 +79,7 @@ describe('QueueService', () => {
   });
 
   afterAll(async () => {
+    await dataSource.dropDatabase();
     await dataSource.destroy();
   });
 

@@ -12,7 +12,7 @@ import { getUserFromSocket } from './game.gateway';
 import { Mutex } from 'async-mutex';
 
 @WebSocketGateway({ namespace: '/' })
-export class QueueGateway implements OnGatewayConnection, OnGatewayDisconnect {
+export class QueueGateWay implements OnGatewayConnection, OnGatewayDisconnect {
   constructor(
     private readonly queueFactory: QueueFactory,
     private readonly userFactory: UserFactory,
@@ -28,6 +28,7 @@ export class QueueGateway implements OnGatewayConnection, OnGatewayDisconnect {
         socket.disconnect();
         return;
       }
+      console.log('join queue', user.nickname);
 
       if (user.socket['queue']?.id !== socket.id) {
         user.socket['queue']?.disconnect();

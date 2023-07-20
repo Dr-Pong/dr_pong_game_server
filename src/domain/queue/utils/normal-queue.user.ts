@@ -1,5 +1,5 @@
 import { GameMode } from 'src/global/type/type.game.mode';
-import { UserModel } from './user.model';
+import { UserModel } from '../../factory/model/user.model';
 
 export class NormalQueueUser {
   userId: number;

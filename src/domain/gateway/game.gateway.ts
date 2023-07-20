@@ -136,10 +136,13 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
     this.userFactory.setSocket(user.id, 'game', socket);
     this.userFactory.setStatus(user.id, USERSTATUS_IN_GAME);
 
+    const game: GameModel = this.gameFactory.findById(user.gameId);
     try {
       await axios.patch(`${process.env.CHAT_URL}/users/state`, {
         userId: user.id,
-        gameId: user.gameId,
+        gameId: game?.id,
+        type: game?.type,
+        mode: game?.mode,
       });
     } catch (e) {
       console.log(e?.response?.data);
@@ -150,6 +153,7 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
   private async setUserInGame(user: UserModel, socket: Socket) {
     const game: GameModel = this.gameFactory.findById(user.gameId);
     if (!game) {
+      socket.emit('endGame', {});
       socket.disconnect();
       return;
     }
@@ -387,13 +391,13 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
       game.player1.id === userId &&
       game.player1.bar.direction === direction
     ) {
-      game.player1.bar.direction = 'stop';
+      game.player1.bar.stop();
     }
     if (
       game.player2.id === userId &&
       game.player2.bar.direction !== direction
     ) {
-      game.player2.bar.direction = 'stop';
+      game.player2.bar.stop();
     }
   }
 
@@ -412,10 +416,14 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
       await axios.patch(`${process.env.CHAT_URL}/users/state`, {
         userId: game.player1.id,
         gameId: null,
+        type: null,
+        mode: null,
       });
       await axios.patch(`${process.env.CHAT_URL}/users/state`, {
         userId: game.player2.id,
         gameId: null,
+        type: null,
+        mode: null,
       });
     } catch (e) {
       console.log(e?.response?.data);

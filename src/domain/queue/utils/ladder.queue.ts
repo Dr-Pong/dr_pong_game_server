@@ -1,4 +1,4 @@
-import { LadderQueueUser } from 'src/domain/factory/model/ladder-queue.user';
+import { LadderQueueUser } from 'src/domain/queue/utils/ladder-queue.user';
 import { List } from 'src/global/utils/list';
 
 export class LadderQueue {
