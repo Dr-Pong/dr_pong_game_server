@@ -1,6 +1,9 @@
 import { GamePlayerModel } from 'src/domain/factory/model/game-player.model';
 import { GameModel } from 'src/domain/factory/model/game.model';
 import { UserModel } from 'src/domain/factory/model/user.model';
+import * as dotenv from 'dotenv';
+
+dotenv.config();
 
 export class GameInitDto {
   me: {
@@ -22,6 +25,7 @@ export class GameInitDto {
   };
   server: boolean;
   round: number;
+  gameTime: number;
 
   constructor(game: GameModel, user: UserModel) {
     const me: GamePlayerModel =
@@ -50,5 +54,6 @@ export class GameInitDto {
         ? user.id === game.player1.id
         : user.id === game.player2.id;
     this.round = game.round;
+    this.gameTime = +process.env.GAME_TIME - game.playTime;
   }
 }

@@ -99,6 +99,8 @@ export class Ball {
           +process.env.GAME_FRAME;
     }
     this.speed *= this.elasticity * bar.elasticity;
+    if (this.speed > +process.env.BALL_SPEED * 5)
+      this.speed = +process.env.BALL_SPEED * 5;
   }
 
   randomBounce(): void {

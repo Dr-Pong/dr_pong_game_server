@@ -1,4 +1,7 @@
 import { GameModel } from 'src/domain/factory/model/game.model';
+import * as dotenv from 'dotenv';
+
+dotenv.config();
 
 export class GamePosUpdateDto {
   ballPos: { x: number; y: number };
@@ -6,6 +9,7 @@ export class GamePosUpdateDto {
     me: number;
     opponent: number;
   };
+  gameTime: number;
 
   constructor(game: GameModel, userId: number) {
     if (game.player1.id === userId) {
@@ -28,5 +32,6 @@ export class GamePosUpdateDto {
           (game.board.width - game.player1.bar.position) / game.board.width,
       };
     }
+    this.gameTime = +process.env.GAME_TIME - game.playTime;
   }
 }
