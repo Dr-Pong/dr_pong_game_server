@@ -320,7 +320,6 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   checkGameEnd(game: GameModel): boolean {
-    console.log(game.playTime, +process.env.GAME_TIME);
     return (
       game.player1.score === +process.env.GAME_FINISH_SCORE ||
       game.player2.score === +process.env.GAME_FINISH_SCORE ||
@@ -381,9 +380,11 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
     }
     if (game.player1.id === userId) {
       game.player1.bar.direction = direction;
+      game.player1.bar.speedUp();
     }
     if (game.player2.id === userId) {
       game.player2.bar.direction = direction === 'left' ? 'right' : 'left';
+      game.player2.bar.speedUp();
     }
   }
 
@@ -402,23 +403,56 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
       game.player1.bar.direction === direction
     ) {
       game.player1.bar.stop();
+      game.player1.bar.speed = 70;
     }
     if (
       game.player2.id === userId &&
       game.player2.bar.direction !== direction
     ) {
       game.player2.bar.stop();
+      game.player2.bar.speed = 70;
     }
   }
 
   async endGame(game: GameModel): Promise<void> {
+    let result;
     game.status = 'end';
     game.endTime = new Date();
     try {
-      await axios.post(
-        `${process.env.WEB_URL}/games`,
-        new PostGameRecordDto(game),
-      );
+      result = (
+        await axios.post(
+          `${process.env.WEB_URL}/games`,
+          new PostGameRecordDto(game),
+        )
+      ).data;
+      for (const title of result?.title) {
+        console.log('title to player');
+        if (title.userId === game.player1.id) {
+          console.log('player1 title');
+          game.player1.socket?.emit('title', { title: title.title });
+        }
+        if (title.userId === game.player2.id) {
+          console.log('player2 title');
+          game.player2.socket?.emit('title', { title: title.title });
+        }
+      }
+      for (const achievement of result?.achievement) {
+        console.log('achievement to player');
+        if (achievement.userId === game.player1.id) {
+          console.log('player1');
+          game.player1.socket?.emit('achievement', {
+            name: achievement.achievement,
+            imgUrl: achievement.imgUrl,
+          });
+        }
+        if (achievement.userId === game.player2.id) {
+          console.log('player2');
+          game.player2.socket?.emit('achievement', {
+            achievement: achievement.achievement,
+            imgUrl: achievement.imgUrl,
+          });
+        }
+      }
     } catch (e) {
       console.log(e?.response?.data);
     }
