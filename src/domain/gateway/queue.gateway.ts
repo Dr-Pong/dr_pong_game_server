@@ -8,8 +8,8 @@ import { UserFactory } from '../factory/user.factory';
 import { QueueFactory } from '../factory/queue.factory';
 import { Socket } from 'socket.io';
 import { UserModel } from '../factory/model/user.model';
-import { getUserFromSocket } from './game.gateway';
 import { Mutex } from 'async-mutex';
+import { getUserFromSocket } from 'src/global/utils/socket.utils';
 
 @WebSocketGateway({ namespace: '/' })
 export class QueueGateWay implements OnGatewayConnection, OnGatewayDisconnect {
