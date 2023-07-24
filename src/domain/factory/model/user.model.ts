@@ -10,7 +10,6 @@ export class UserModel {
   nickname: string;
   ladderPoint: number;
   socket: Map<string, Socket>;
-  status: UserStatusType;
   gameId: string;
 
   static fromEntity(entity: User): UserModel {
@@ -23,7 +22,6 @@ export class UserModel {
     this.nickname = nickname;
     this.ladderPoint = null;
     this.socket = new Map<string, Socket>();
-    this.status = USERSTATUS_NOT_IN_GAME;
     this.gameId = null;
   }
 }

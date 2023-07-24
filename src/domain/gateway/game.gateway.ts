@@ -10,13 +10,7 @@ import { GameFactory } from '../factory/game.factory';
 import { UserFactory } from '../factory/user.factory';
 import { Socket } from 'socket.io';
 import { UserModel } from '../factory/model/user.model';
-import { JwtService } from '@nestjs/jwt';
 import { GameModel } from '../factory/model/game.model';
-import axios from 'axios';
-import {
-  USERSTATUS_IN_GAME,
-  USERSTATUS_NOT_IN_GAME,
-} from 'src/global/type/type.user.status';
 import { GamePlayerModel } from '../factory/model/game-player.model';
 import { GameInitDto } from '../game/dto/game.init.dto';
 import { Mutex } from 'async-mutex';
@@ -26,8 +20,13 @@ import { Ball } from '../factory/objects/ball';
 import { sleep } from 'src/global/utils/sleep';
 import { GamePosUpdateDto } from '../game/dto/game.pos.update.dto';
 import { GameRoundUpdateDto } from '../game/dto/game.round.update.dto';
-import { PostGameRecordDto } from '../game/dto/post.game.record.dto';
 import { GAMEMODE_RANDOMBOUNCE } from 'src/global/type/type.game.mode';
+import {
+  checkAchievementAndTitle,
+  getUserFromSocket,
+  patchUserStatesInGame,
+  patchUserStatesOutOfGame,
+} from 'src/global/utils/socket.utils';
 
 @WebSocketGateway({ namespace: 'game' })
 export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
@@ -55,10 +54,6 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   handleDisconnect(@ConnectedSocket() socket: Socket) {
-    const user: UserModel = this.userFactory.findById(
-      this.sockets.get(socket.id),
-    );
-    this.userFactory.setStatus(user.id, USERSTATUS_NOT_IN_GAME);
     this.sockets.delete(socket.id);
   }
 
@@ -134,19 +129,9 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
     }
     this.sockets.set(socket.id, user.id);
     this.userFactory.setSocket(user.id, 'game', socket);
-    this.userFactory.setStatus(user.id, USERSTATUS_IN_GAME);
 
     const game: GameModel = this.gameFactory.findById(user.gameId);
-    try {
-      await axios.patch(`${process.env.CHAT_URL}/users/state`, {
-        userId: user.id,
-        gameId: game?.id,
-        type: game?.type,
-        mode: game?.mode,
-      });
-    } catch (e) {
-      console.log(e?.response?.data);
-    }
+    await patchUserStatesInGame(game, user);
     this.setUserIsReady(user.id, user.gameId, true);
   }
 
@@ -320,7 +305,6 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   checkGameEnd(game: GameModel): boolean {
-    console.log(game.playTime, +process.env.GAME_TIME);
     return (
       game.player1.score === +process.env.GAME_FINISH_SCORE ||
       game.player2.score === +process.env.GAME_FINISH_SCORE ||
@@ -402,51 +386,26 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
       game.player1.bar.direction === direction
     ) {
       game.player1.bar.stop();
+      game.player1.bar.speed = 70;
     }
     if (
       game.player2.id === userId &&
       game.player2.bar.direction !== direction
     ) {
       game.player2.bar.stop();
+      game.player2.bar.speed = 70;
     }
   }
 
   async endGame(game: GameModel): Promise<void> {
     game.status = 'end';
     game.endTime = new Date();
-    try {
-      await axios.post(
-        `${process.env.WEB_URL}/games`,
-        new PostGameRecordDto(game),
-      );
-    } catch (e) {
-      console.log(e?.response?.data);
-    }
-    try {
-      await axios.patch(`${process.env.CHAT_URL}/users/state`, {
-        userId: game.player1.id,
-        gameId: null,
-        type: null,
-        mode: null,
-      });
-      await axios.patch(`${process.env.CHAT_URL}/users/state`, {
-        userId: game.player2.id,
-        gameId: null,
-        type: null,
-        mode: null,
-      });
-    } catch (e) {
-      console.log(e?.response?.data);
-    }
+    await checkAchievementAndTitle(game);
+    await patchUserStatesOutOfGame(game);
     this.sendGameEnd(game);
-    const player1: UserModel = this.userFactory.findById(game.player1.id);
-    const player2: UserModel = this.userFactory.findById(game.player2.id);
-    player1.gameId = null;
-    player1.socket['game'] = null;
-    player2.gameId = null;
-    player2.socket['game'] = null;
+    this.userFactory.deleteGameId(game.player1.id);
+    this.userFactory.deleteGameId(game.player2.id);
     this.gameFactory.delete(game.id);
-    console.log('game end', game.id);
   }
 
   private sendGameEnd(game: GameModel): void {
@@ -513,32 +472,5 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
     }
     ball.setPosition(ball.x, yPosition);
     this.sendTouchBarEvent(game);
-  }
-}
-
-export function getUserFromSocket(
-  socket: Socket,
-  userFactory: UserFactory,
-): UserModel {
-  const jwtService: JwtService = new JwtService({
-    secret: 'jwtSecret',
-    signOptions: {
-      expiresIn: 60 * 60 * 60,
-    },
-  });
-
-  const accesstoken = socket.handshake.auth?.Authorization?.split(' ')[1];
-  if (!accesstoken) {
-    console.log('no token', socket.id);
-    return null;
-  }
-  try {
-    const userToken = jwtService.verify(accesstoken);
-    const userId = userToken?.id;
-    const user: UserModel = userFactory.findById(userId);
-    return user;
-  } catch (e) {
-    console.log(accesstoken, e);
-    return null;
   }
 }

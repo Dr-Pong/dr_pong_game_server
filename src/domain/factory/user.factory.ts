@@ -22,11 +22,6 @@ export class UserFactory {
     return user;
   }
 
-  setStatus(userId: number, status: UserStatusType): void {
-    const user: UserModel = this.findById(userId);
-    user.status = status;
-  }
-
   setSocket(userId: number, gatewayType: string, socket: Socket): void {
     const user: UserModel = this.findById(userId);
     user.socket[gatewayType] = socket;
@@ -40,5 +35,11 @@ export class UserFactory {
   setLadderPoint(userId: number, ladderPoint: number): void {
     const user: UserModel = this.findById(userId);
     user.ladderPoint = ladderPoint;
+  }
+
+  deleteGameId(userId: number): void {
+    const user: UserModel = this.findById(userId);
+    user.gameId = null;
+    user.socket['game'] = null;
   }
 }
