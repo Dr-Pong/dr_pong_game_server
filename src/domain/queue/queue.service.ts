@@ -104,7 +104,7 @@ export class QueueService {
   ): Promise<number> {
     try {
       const response = await axios.get(
-        process.env.WEB_URL + '/users/' + userId + '/ranks/current',
+        process.env.WEBSERVER_URL + '/users/' + userId + '/ranks/current',
       );
       this.userFactory.setLadderPoint(userId, response.data.lp);
       return response.data.lp;
