@@ -7,6 +7,6 @@ async function bootstrap() {
   initializeTransactionalContext();
   dotenv.config();
   const app = await NestFactory.create(AppModule);
-  await app.listen(2222);
+  await app.listen(4343);
 }
 bootstrap();
