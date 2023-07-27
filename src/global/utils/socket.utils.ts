@@ -42,7 +42,7 @@ export async function checkAchievementAndTitle(game: GameModel): Promise<void> {
   try {
     result = (
       await axios.post(
-        `${process.env.WEB_URL}/games`,
+        `${process.env.WEBSERVER_URL}/games`,
         new PostGameRecordDto(game),
       )
     ).data;
@@ -81,13 +81,13 @@ export async function checkAchievementAndTitle(game: GameModel): Promise<void> {
 
 export async function patchUserStatesOutOfGame(game: GameModel): Promise<void> {
   try {
-    await axios.patch(`${process.env.CHAT_URL}/users/state`, {
+    await axios.patch(`${process.env.CHATSERVER_URL}/users/state`, {
       userId: game.player1.id,
       gameId: null,
       type: null,
       mode: null,
     });
-    await axios.patch(`${process.env.CHAT_URL}/users/state`, {
+    await axios.patch(`${process.env.CHATSERVER_URL}/users/state`, {
       userId: game.player2.id,
       gameId: null,
       type: null,
@@ -103,7 +103,7 @@ export async function patchUserStatesInGame(
   user: UserModel,
 ): Promise<void> {
   try {
-    await axios.patch(`${process.env.CHAT_URL}/users/state`, {
+    await axios.patch(`${process.env.CHATSERVER_URL}/users/state`, {
       userId: user.id,
       gameId: game?.id,
       type: game?.type,
