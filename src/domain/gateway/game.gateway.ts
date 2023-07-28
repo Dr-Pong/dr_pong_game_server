@@ -46,8 +46,6 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
         socket.disconnect();
         return;
       }
-      await this.setUserInFactory(user, socket);
-      await this.setUserInGame(user, socket);
     } finally {
       release();
     }
@@ -116,6 +114,22 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
     if (game.player2.id === userId) {
       game.player1.socket?.emit('opponentEmoji', url);
     }
+  }
+
+  @SubscribeMessage('handshake')
+  async validateGameId(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody() roomId: string,
+  ): Promise<void> {
+    const user: UserModel = this.userFactory.findById(this.sockets.get(socket.id));
+    if (!user || user.gameId !== roomId) {
+      socket?.emit('handshake', {isValid: false})
+      socket.disconnect();
+      return;
+    }
+    await this.setUserInFactory(user, socket);
+    await this.setUserInGame(user, socket);
+    socket?.emit('handshake', {isValid: true});
   }
 
   private async setUserInFactory(
