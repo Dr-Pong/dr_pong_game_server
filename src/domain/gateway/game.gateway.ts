@@ -47,8 +47,7 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
         return;
       }
       await this.setUserInFactory(user, socket);
-      await this.setUserInGame(user, socket);
-    } finally {
+      } finally {
       release();
     }
   }
@@ -118,6 +117,25 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
+  @SubscribeMessage('handshake')
+  async validateGameId(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody() data: {roomId: string},
+  ): Promise<void> {
+    const userId: number = this.sockets.get(socket.id);
+    const user: UserModel = this.userFactory.findById(userId);
+    if (!user || user.gameId !== data?.roomId) {
+      socket?.emit('handshake', {isValid: false});
+      socket.disconnect();
+      return;
+    }
+    const game: GameModel = this.gameFactory.findById(user.gameId);
+    await patchUserStatesInGame(game, user);
+    this.setUserIsReady(user.id, user.gameId, true);
+    await this.setUserInGame(user, socket);
+    socket?.emit('handshake', {isValid: true});
+  }
+
   private async setUserInFactory(
     user: UserModel,
     socket: Socket,
@@ -130,9 +148,6 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
     this.sockets.set(socket.id, user.id);
     this.userFactory.setSocket(user.id, 'game', socket);
 
-    const game: GameModel = this.gameFactory.findById(user.gameId);
-    await patchUserStatesInGame(game, user);
-    this.setUserIsReady(user.id, user.gameId, true);
   }
 
   private async setUserInGame(user: UserModel, socket: Socket) {
