@@ -74,8 +74,8 @@ export class UserFactory {
         process.env.WEBSERVER_URL + '/users/' + nickname + '/detail',
       );
       return {
-        imgUrl: response.data.image.url,
-        title: response.data.title.title,
+        imgUrl: response.data?.image.url,
+        title: response.data?.title?.title ?? null,
       };
     } catch (error) {
       console.log(error);
