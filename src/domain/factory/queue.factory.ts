@@ -24,8 +24,9 @@ export class QueueFactory {
   normalQueue: NormalQueue = new NormalQueue();
   static i = 0;
 
-  addLadderQueue(userId: number, ladderPoint: number): void {
-    this.ladderQueue.add(new LadderQueueUser(userId, ladderPoint));
+  addLadderQueue(userId: number): void {
+    const user: UserModel = this.userFactory.findById(userId);
+    this.ladderQueue.add(new LadderQueueUser(user.id, user.ladderPoint));
   }
 
   addNormalQueue(userId: number, mode: GameMode): void {

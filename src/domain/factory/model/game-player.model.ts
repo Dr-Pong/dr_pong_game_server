@@ -5,6 +5,8 @@ import { UserModel } from './user.model';
 export class GamePlayerModel {
   id: number;
   nickname: string;
+  imgUrl: string;
+  title: string;
   ladderPoint: number;
   score: number;
   bar: Bar;
@@ -14,6 +16,8 @@ export class GamePlayerModel {
   constructor(user: UserModel) {
     this.id = user.id;
     this.nickname = user.nickname;
+    this.imgUrl = user.imgUrl;
+    this.title = user.title;
     this.ladderPoint = user.ladderPoint;
     this.score = 0;
     this.bar = new Bar(

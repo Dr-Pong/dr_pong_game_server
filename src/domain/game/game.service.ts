@@ -21,6 +21,8 @@ export class GameService {
 
   async postGame(postDto: PostGameDto): Promise<PostGameResponseDto> {
     const { type, mode } = postDto;
+    await this.userFactory.setUserInfo(postDto.user1Id);
+    await this.userFactory.setUserInfo(postDto.user2Id);
     const user1: UserModel = this.userFactory.findById(postDto.user1Id);
     const user2: UserModel = this.userFactory.findById(postDto.user2Id);
     const gameId: string = this.gameFactory.create(
