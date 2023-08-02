@@ -27,6 +27,7 @@ import {
   patchUserStatesInGame,
   patchUserStatesOutOfGame,
 } from 'src/global/utils/socket.utils';
+import { UserInitDto } from './user.init.dto';
 
 @WebSocketGateway({ namespace: 'game' })
 export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
@@ -47,7 +48,7 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
         return;
       }
       await this.setUserInFactory(user, socket);
-      } finally {
+    } finally {
       release();
     }
   }
@@ -117,15 +118,15 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
-  @SubscribeMessage('handshake')
+  @SubscribeMessage('joinGame')
   async validateGameId(
     @ConnectedSocket() socket: Socket,
-    @MessageBody() data: {roomId: string},
+    @MessageBody() data: { roomId: string },
   ): Promise<void> {
     const userId: number = this.sockets.get(socket.id);
     const user: UserModel = this.userFactory.findById(userId);
     if (!user || user.gameId !== data?.roomId) {
-      socket?.emit('handshake', {isValid: false});
+      socket?.emit('invalidGameId', {});
       socket.disconnect();
       return;
     }
@@ -133,7 +134,6 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
     await patchUserStatesInGame(game, user);
     this.setUserIsReady(user.id, user.gameId, true);
     await this.setUserInGame(user, socket);
-    socket?.emit('handshake', {isValid: true});
   }
 
   private async setUserInFactory(
@@ -142,21 +142,16 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
   ): Promise<void> {
     console.log('user connected', user.id, user.nickname);
     if (user.socket['game']?.id !== socket.id) {
+      user.socket['game']?.emit('multiConnect', {});
       user.socket['game']?.disconnect();
       this.userFactory.setSocket(user.id, 'game', null);
     }
     this.sockets.set(socket.id, user.id);
     this.userFactory.setSocket(user.id, 'game', socket);
-
   }
 
   private async setUserInGame(user: UserModel, socket: Socket) {
     const game: GameModel = this.gameFactory.findById(user.gameId);
-    if (!game) {
-      socket.emit('endGame', {});
-      socket.disconnect();
-      return;
-    }
     if (game.player1.id === user.id) {
       game.player1.socket = socket;
     } else {
@@ -174,10 +169,8 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
     const opponent: GamePlayerModel =
       game.player1.id === user.id ? game.player2 : game.player1;
 
-    gamePlayer.socket?.emit('matchInfo', {
-      nickname: opponent.nickname,
-    });
-    gamePlayer.socket?.emit('initData', new GameInitDto(game, user));
+    gamePlayer.socket?.emit('userInit', new UserInitDto(gamePlayer, opponent));
+    gamePlayer.socket?.emit('gameInit', new GameInitDto(game, user));
   }
 
   setUserIsReady(userId: number, gameId: string, isReady: boolean): void {

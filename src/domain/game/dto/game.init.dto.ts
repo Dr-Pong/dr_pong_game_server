@@ -11,12 +11,14 @@ export class GameInitDto {
     y: number;
     width: number;
     height: number;
+    score: number;
   };
   opponent: {
     x: number;
     y: number;
     width: number;
     height: number;
+    score: number;
   };
   ball: {
     x: number;
@@ -37,12 +39,14 @@ export class GameInitDto {
       y: (game.board.height - 1.5) / game.board.height,
       width: me.bar.width / game.board.width,
       height: 1.5 / game.board.height,
+      score: me.score,
     };
     this.opponent = {
       x: opponent.bar.position / game.board.width,
       y: 0,
       width: opponent.bar.width / game.board.width,
       height: 1.5 / game.board.height,
+      score: opponent.score,
     };
     this.ball = {
       x: game.ball.x / game.board.width,
