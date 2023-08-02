@@ -423,6 +423,13 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
     this.gameFactory.delete(game.id);
   }
 
+  async exitGame(game: GameModel): Promise<void> {
+    game.player1.socket?.emit('endGame', {});
+    game.player2.socket?.emit('endGame', {});
+    game.player1.socket?.disconnect();
+    game.player2.socket?.disconnect();
+  }
+
   private sendGameEnd(game: GameModel): void {
     let player1Result =
       game.player1.score > game.player2.score ? 'win' : 'lose';

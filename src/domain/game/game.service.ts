@@ -6,6 +6,9 @@ import { UserModel } from '../factory/model/user.model';
 import { PostGameDto } from './dto/post.game.dto';
 import { PostGameResponseDto } from './dto/post.game.response.dto';
 import { QueueGateWay } from '../gateway/queue.gateway';
+import { Cron } from '@nestjs/schedule';
+import { GameGateWay } from '../gateway/game.gateway';
+import { patchUserStatesOutOfGame } from 'src/global/utils/socket.utils';
 
 @Injectable()
 export class GameService {
@@ -13,6 +16,7 @@ export class GameService {
     private readonly userFactory: UserFactory,
     private readonly gameFactory: GameFactory,
     private readonly queueGateway: QueueGateWay,
+    private readonly gameGateway: GameGateWay,
   ) {}
 
   async postGame(postDto: PostGameDto): Promise<PostGameResponseDto> {
@@ -27,5 +31,22 @@ export class GameService {
     this.queueGateway.sendJoinGame(user1.id);
     this.queueGateway.sendJoinGame(user2.id);
     return { gameId };
+  }
+
+  @Cron('0/10 * * * * *')
+  async cleanUpUnmatchedGames(): Promise<void> {
+    console.log('matching...');
+    this.gameFactory.games.forEach(async (game) => {
+      if (
+        game.status === 'standby' &&
+        new Date().getTime() - game.startTime.getTime() > 10000
+      ) {
+        await patchUserStatesOutOfGame(game);
+        this.gameGateway.exitGame(game);
+        this.userFactory.deleteGameId(game.player1.id);
+        this.userFactory.deleteGameId(game.player2.id);
+        this.gameFactory.delete(game.id);
+      }
+    });
   }
 }
