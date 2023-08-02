@@ -71,7 +71,7 @@ export class UserFactory {
   ): Promise<{ imgUrl: string; title: string }> {
     try {
       const response = await axios.get(
-        process.env.WEBSERVER_URL + '/users/' + nickname,
+        process.env.WEBSERVER_URL + '/users/' + nickname + '/detail',
       );
       return {
         imgUrl: response.data.image.url,
