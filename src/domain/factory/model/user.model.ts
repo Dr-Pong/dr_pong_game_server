@@ -1,4 +1,5 @@
 import { Socket } from 'socket.io';
+import { KeyManager } from 'src/domain/redis/util/redis.key.manager';
 import { User } from 'src/domain/user/user.entity';
 
 export class UserModel {
@@ -23,5 +24,17 @@ export class UserModel {
     this.ladderPoint = null;
     this.socket = new Map<string, Socket>();
     this.gameId = null;
+  }
+
+  toString(): string {
+    return JSON.stringify(this);
+  }
+
+  getRedisKeyId(): string {
+    return KeyManager.generateUserIdKey(this.id);
+  }
+
+  getRedisKeyNickname(): string {
+    return KeyManager.generateUserNickNameKey(this.nickname);
   }
 }

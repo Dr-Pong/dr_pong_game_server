@@ -32,9 +32,9 @@ export class QueueService {
       await this.redisUserRepository.setUserInfo(userId);
       if (type === GAMETYPE_LADDER) {
         await this.redisUserRepository.setLadderPoint(userId);
-        this.queueFactory.addLadderQueue(userId);
+        await this.queueFactory.addLadderQueue(userId);
       } else {
-        this.queueFactory.addNormalQueue(userId, mode);
+        await this.queueFactory.addNormalQueue(userId, mode);
       }
     } finally {
       release();
@@ -59,30 +59,30 @@ export class QueueService {
     const release = await mutex.acquire();
     try {
       console.log('matching...');
-      this.processNormalQueue();
-      this.processLadderQueue();
+      await this.processNormalQueue();
+      await this.processLadderQueue();
     } finally {
       release();
     }
   }
 
-  private processNormalQueue(): void {
+  private async processNormalQueue(): Promise<void> {
     while (true) {
-      const newGame: GameModel = this.queueFactory.normalGameMatch();
+      const newGame: GameModel = await this.queueFactory.normalGameMatch();
       if (!newGame) break;
       this.gameFactory.create(newGame);
-      this.queueGateway.sendJoinGame(newGame.player1.id);
-      this.queueGateway.sendJoinGame(newGame.player2.id);
+      await this.queueGateway.sendJoinGame(newGame.player1.id);
+      await this.queueGateway.sendJoinGame(newGame.player2.id);
     }
   }
 
-  private processLadderQueue(): void {
+  private async processLadderQueue(): Promise<void> {
     while (true) {
-      const newGame: GameModel = this.queueFactory.ladderGameMatch();
+      const newGame: GameModel = await this.queueFactory.ladderGameMatch();
       if (!newGame) break;
       this.gameFactory.create(newGame);
-      this.queueGateway.sendJoinGame(newGame.player1.id);
-      this.queueGateway.sendJoinGame(newGame.player2.id);
+      await this.queueGateway.sendJoinGame(newGame.player1.id);
+      await this.queueGateway.sendJoinGame(newGame.player2.id);
     }
   }
 

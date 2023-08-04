@@ -50,7 +50,7 @@ export class GameService {
         new Date().getTime() - game.startTime.getTime() > 10000
       ) {
         await patchUserStatesOutOfGame(game);
-        this.gameGateway.exitGame(game);
+        await this.gameGateway.exitGame(game);
         await this.redisUserRepository.deleteGameId(game.player1.id);
         await this.redisUserRepository.deleteGameId(game.player2.id);
         this.gameFactory.delete(game.id);

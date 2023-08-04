@@ -1,14 +1,13 @@
 import { Injectable, OnApplicationBootstrap } from '@nestjs/common';
-import { UserService } from './domain/user/user.service';
-import { UserFactory } from './domain/factory/user.factory';
 import { User } from './domain/user/user.entity';
 import { UserRepository } from './domain/user/user.repository';
 import { UserModel } from './domain/factory/model/user.model';
+import { RedisUserRepository } from './domain/redis/redis.user.repository';
 
 @Injectable()
 export class AppService implements OnApplicationBootstrap {
   constructor(
-    private readonly userFactory: UserFactory,
+    private readonly redisUserRepository: RedisUserRepository,
     private readonly userRepository: UserRepository,
   ) {}
 
@@ -16,7 +15,7 @@ export class AppService implements OnApplicationBootstrap {
     const users: User[] = await this.userRepository.findAll();
 
     for (const user of users) {
-      this.userFactory.create(UserModel.fromEntity(user));
+      this.redisUserRepository.create(UserModel.fromEntity(user));
     }
   }
 

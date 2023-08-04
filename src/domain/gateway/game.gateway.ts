@@ -221,9 +221,9 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
       return;
     }
     this.move(game);
-    this.handleTouchEvent(game);
+    await this.handleTouchEvent(game);
     await this.handleGoal(game, game.ball);
-    this.sendPositionUpdate(game);
+    await this.sendPositionUpdate(game);
     this.setPlayTime(game);
     setTimeout(() => {
       this.gameLoop(game);
@@ -241,21 +241,25 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
     game.player2.bar.move();
   }
 
-  handleTouchEvent(game: GameModel): void {
-    this.handleTouchBar(game, game.player1, game.ball);
-    this.handleTouchBar(game, game.player2, game.ball);
-    this.handleTouchWall(game, game.ball);
+  async handleTouchEvent(game: GameModel): Promise<void> {
+    await this.handleTouchBar(game, game.player1, game.ball);
+    await this.handleTouchBar(game, game.player2, game.ball);
+    await this.handleTouchWall(game, game.ball);
   }
 
-  handleTouchBar(game: GameModel, player: GamePlayerModel, ball: Ball): void {
+  async handleTouchBar(
+    game: GameModel,
+    player: GamePlayerModel,
+    ball: Ball,
+  ): Promise<void> {
     const bar: Bar = player.bar;
 
     // user2 바 체크
     if (
       player.id === game.player2.id &&
-      this.isBallTouchingBar(ball, bar, 1.5 / +process.env.BOARD_HEIGHT)
+      (await this.isBallTouchingBar(ball, bar, 1.5 / +process.env.BOARD_HEIGHT))
     ) {
-      this.handleBallTouchingBar(
+      await this.handleBallTouchingBar(
         game,
         ball,
         player,
@@ -266,13 +270,13 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
     //  user1 바 체크
     if (
       player.id === game.player1.id &&
-      this.isBallTouchingBar(
+      (await this.isBallTouchingBar(
         ball,
         bar,
         game.board.height - 1.5 / game.board.height,
-      )
+      ))
     ) {
-      this.handleBallTouchingBar(
+      await this.handleBallTouchingBar(
         game,
         ball,
         player,
@@ -281,18 +285,18 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
-  handleTouchWall(game: GameModel, ball: Ball): void {
+  async handleTouchWall(game: GameModel, ball: Ball): Promise<void> {
     // 왼쪽 벽 체크
     if (ball.x - ball.size / 2 <= 0) {
       ball.touchWall();
       ball.setPosition(ball.size / 2, ball.y);
-      this.sendTouchWallEvent(game);
+      await this.sendTouchWallEvent(game);
     }
     // 오른쪽 벽 체크
     if (ball.x + ball.size / 2 >= game.board.width) {
       ball.touchWall();
       ball.setPosition(game.board.width - ball.size / 2, ball.y);
-      this.sendTouchWallEvent(game);
+      await this.sendTouchWallEvent(game);
     }
   }
 
@@ -318,8 +322,8 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
       game.round++;
       this.sendRoundUpdate(game);
     }
-    if (this.checkGameEnd(game)) {
-      this.endGame(game);
+    if (await this.checkGameEnd(game)) {
+      await this.endGame(game);
       return;
     }
     if (player1Win || player2Win) {
@@ -328,7 +332,7 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
-  checkGameEnd(game: GameModel): boolean {
+  async checkGameEnd(game: GameModel): Promise<boolean> {
     return (
       game.player1.score === +process.env.GAME_FINISH_SCORE ||
       game.player2.score === +process.env.GAME_FINISH_SCORE ||
@@ -346,17 +350,17 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
     game.status = 'playing';
   }
 
-  sendTouchWallEvent(game: GameModel): void {
+  async sendTouchWallEvent(game: GameModel): Promise<void> {
     game.player1.socket?.emit('wallTouch', {});
     game.player2.socket?.emit('wallTouch', {});
   }
 
-  sendTouchBarEvent(game: GameModel) {
+  async sendTouchBarEvent(game: GameModel): Promise<void> {
     game.player1.socket?.emit('barTouch', {});
     game.player2.socket?.emit('barTouch', {});
   }
 
-  sendPositionUpdate(game: GameModel): void {
+  async sendPositionUpdate(game: GameModel): Promise<void> {
     game.player1.socket?.emit(
       'posUpdate',
       new GamePosUpdateDto(game, game.player1.id),
@@ -426,9 +430,9 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
     game.endTime = new Date();
     await checkAchievementAndTitle(game);
     await patchUserStatesOutOfGame(game);
-    this.sendGameEnd(game);
-    this.redisUserRepository.deleteGameId(game.player1.id);
-    this.redisUserRepository.deleteGameId(game.player2.id);
+    await this.sendGameEnd(game);
+    await this.redisUserRepository.deleteGameId(game.player1.id);
+    await this.redisUserRepository.deleteGameId(game.player2.id);
     this.gameFactory.delete(game.id);
   }
 
@@ -439,7 +443,7 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
     game.player2.socket?.disconnect();
   }
 
-  private sendGameEnd(game: GameModel): void {
+  private async sendGameEnd(game: GameModel): Promise<void> {
     let player1Result =
       game.player1.score > game.player2.score ? 'win' : 'lose';
     let player2Result =
@@ -471,7 +475,11 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
     });
   }
 
-  private isBallTouchingBar(ball: Ball, bar: Bar, yPosition: number): boolean {
+  private async isBallTouchingBar(
+    ball: Ball,
+    bar: Bar,
+    yPosition: number,
+  ): Promise<boolean> {
     const barLeft: number = bar.position - bar.width / 2;
     const barRight: number = bar.position + bar.width / 2;
 
@@ -489,12 +497,12 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
     );
   }
 
-  private handleBallTouchingBar(
+  private async handleBallTouchingBar(
     game: GameModel,
     ball: Ball,
     player: GamePlayerModel,
     yPosition: number,
-  ): void {
+  ): Promise<void> {
     const bar: Bar = player.bar;
     game.touchLog.push(new GameLog(player.id, game.round, 'touch', ball));
     ball.touchBar(bar);
@@ -502,6 +510,6 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
       ball.randomBounce();
     }
     ball.setPosition(ball.x, yPosition);
-    this.sendTouchBarEvent(game);
+    await this.sendTouchBarEvent(game);
   }
 }
