@@ -4,27 +4,32 @@ import {
   OnGatewayDisconnect,
   WebSocketGateway,
 } from '@nestjs/websockets';
-import { UserFactory } from '../factory/user.factory';
 import { QueueFactory } from '../factory/queue.factory';
 import { Socket } from 'socket.io';
 import { UserModel } from '../factory/model/user.model';
 import { Mutex } from 'async-mutex';
 import { getUserFromSocket } from 'src/global/utils/socket.utils';
+import { RedisUserRepository } from '../redis/redis.user.repository';
+import { MutexManager } from '../mutex/mutex.manager';
 
 @WebSocketGateway({ namespace: '/' })
 export class QueueGateWay implements OnGatewayConnection, OnGatewayDisconnect {
   constructor(
+    private readonly mutexManager: MutexManager,
     private readonly queueFactory: QueueFactory,
-    private readonly userFactory: UserFactory,
+    private readonly redisUserRepository: RedisUserRepository,
   ) {}
-  private mutex: Mutex = new Mutex();
-  sockets: Map<string, number> = new Map();
 
   async handleConnection(@ConnectedSocket() socket: Socket) {
-    const release = await this.mutex.acquire();
+    const mutex: Mutex = this.mutexManager.getMutex('queueSocket');
+    const release = await mutex.acquire();
     try {
-      const user: UserModel = getUserFromSocket(socket, this.userFactory);
+      const user: UserModel = await getUserFromSocket(
+        socket,
+        this.redisUserRepository,
+      );
       if (!user) {
+        console.log('user not found');
         socket.disconnect();
         return;
       }
@@ -33,22 +38,28 @@ export class QueueGateWay implements OnGatewayConnection, OnGatewayDisconnect {
       if (user.socket['queue']?.id !== socket.id) {
         user.socket['queue']?.disconnect();
       }
-      this.userFactory.setSocket(user.id, 'queue', socket);
-      this.sockets.set(socket.id, user.id);
+      this.redisUserRepository.setSocket(user.id, 'queue', socket);
     } finally {
       release();
     }
   }
 
   async handleDisconnect(@ConnectedSocket() socket: Socket) {
-    const userId: number = this.sockets.get(socket.id);
-    this.queueFactory.delete(userId);
-    this.userFactory.setSocket(userId, 'queue', null);
-    this.sockets.delete(socket.id);
+    const user: UserModel = await getUserFromSocket(
+      socket,
+      this.redisUserRepository,
+    );
+    if (!user) {
+      console.log('user not found');
+      socket.disconnect();
+      return;
+    }
+    this.queueFactory.delete(user.id);
+    await this.redisUserRepository.setSocket(user.id, 'queue', null);
   }
 
   async sendJoinGame(userId: number): Promise<void> {
-    const user: UserModel = this.userFactory.findById(userId);
+    const user: UserModel = await this.redisUserRepository.findById(userId);
     user.socket['queue']?.emit('matched', { roomId: user.gameId });
   }
 }

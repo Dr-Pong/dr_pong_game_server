@@ -7,7 +7,6 @@ import {
   WebSocketGateway,
 } from '@nestjs/websockets';
 import { GameFactory } from '../factory/game.factory';
-import { UserFactory } from '../factory/user.factory';
 import { Socket } from 'socket.io';
 import { UserModel } from '../factory/model/user.model';
 import { GameModel } from '../factory/model/game.model';
@@ -27,21 +26,26 @@ import {
   patchUserStatesInGame,
   patchUserStatesOutOfGame,
 } from 'src/global/utils/socket.utils';
-import { UserInitDto } from './user.init.dto';
+import { UserInitDto } from '../game/dto/user.init.dto';
+import { RedisUserRepository } from '../redis/redis.user.repository';
+import { MutexManager } from '../mutex/mutex.manager';
 
 @WebSocketGateway({ namespace: 'game' })
 export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
   constructor(
     private readonly gameFactory: GameFactory,
-    private readonly userFactory: UserFactory,
+    private readonly mutexManager: MutexManager,
+    private readonly redisUserRepository: RedisUserRepository,
   ) {}
-  private mutex: Mutex = new Mutex();
-  sockets: Map<string, number> = new Map();
 
   async handleConnection(@ConnectedSocket() socket: Socket) {
-    const release = await this.mutex.acquire();
+    const mutex: Mutex = this.mutexManager.getMutex('gameSocket');
+    const release = await mutex.acquire();
     try {
-      const user: UserModel = getUserFromSocket(socket, this.userFactory);
+      const user: UserModel = await getUserFromSocket(
+        socket,
+        this.redisUserRepository,
+      );
       if (!user) {
         console.log('user not found', socket.id);
         socket.disconnect();
@@ -54,7 +58,7 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   handleDisconnect(@ConnectedSocket() socket: Socket) {
-    this.sockets.delete(socket.id);
+    console.log('disconnect', socket.id);
   }
 
   @SubscribeMessage('keyPress')
@@ -62,17 +66,20 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
     @ConnectedSocket() socket: Socket,
     @MessageBody() data: { roomId: string; key: 'left' | 'right' },
   ): Promise<void> {
-    const userId: number = this.sockets.get(socket.id);
-    if (!userId) {
+    const user: UserModel = await getUserFromSocket(
+      socket,
+      this.redisUserRepository,
+    );
+    if (!user) {
       socket.disconnect();
       return;
     }
-    const game: GameModel = this.gameFactory.findById(data.roomId);
+    const game: GameModel = await this.gameFactory.findById(data.roomId);
     if (!game) {
       socket.disconnect();
       return;
     }
-    this.changeBarDirection(game.id, userId, data.key);
+    this.changeBarDirection(game.id, user.id, data.key);
   }
 
   @SubscribeMessage('keyRelease')
@@ -80,8 +87,11 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
     @ConnectedSocket() socket: Socket,
     @MessageBody() data: { roomId: string; key: 'left' | 'right' },
   ): Promise<void> {
-    const userId: number = this.sockets.get(socket.id);
-    if (!userId) {
+    const user: UserModel = await getUserFromSocket(
+      socket,
+      this.redisUserRepository,
+    );
+    if (!user) {
       socket.disconnect();
       return;
     }
@@ -90,31 +100,36 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
       socket.disconnect();
       return;
     }
-    this.stopBar(game.id, userId, data.key);
+    this.stopBar(game.id, user.id, data.key);
   }
 
   @SubscribeMessage('myEmoji')
-  handleMyEmoji(
+  async handleMyEmoji(
     @ConnectedSocket() socket: Socket,
     @MessageBody() url: string,
-  ): void {
-    const userId: number = this.sockets.get(socket.id);
-    if (!userId) {
+  ): Promise<void> {
+    const user: UserModel = await getUserFromSocket(
+      socket,
+      this.redisUserRepository,
+    );
+    if (!user) {
       socket.disconnect();
       return;
     }
     const game: GameModel = this.gameFactory.findById(
-      this.userFactory.findById(userId).gameId,
+      (await this.redisUserRepository.findById(user.id)).gameId,
     );
     if (!game) {
       socket.disconnect();
       return;
     }
-    if (game.player1.id === userId) {
+    if (game.player1.id === user.id) {
+      game.player1.socket?.emit('myEmoji', url);
       game.player2.socket?.emit('opponentEmoji', url);
     }
-    if (game.player2.id === userId) {
+    if (game.player2.id === user.id) {
       game.player1.socket?.emit('opponentEmoji', url);
+      game.player2.socket?.emit('myEmoji', url);
     }
   }
 
@@ -123,8 +138,10 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
     @ConnectedSocket() socket: Socket,
     @MessageBody() data: { roomId: string },
   ): Promise<void> {
-    const userId: number = this.sockets.get(socket.id);
-    const user: UserModel = this.userFactory.findById(userId);
+    const user: UserModel = await getUserFromSocket(
+      socket,
+      this.redisUserRepository,
+    );
     if (!user || user.gameId !== data?.roomId) {
       socket?.emit('invalidGameId', {});
       socket.disconnect();
@@ -144,10 +161,9 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
     if (user.socket['game']?.id !== socket.id) {
       user.socket['game']?.emit('multiConnect', {});
       user.socket['game']?.disconnect();
-      this.userFactory.setSocket(user.id, 'game', null);
+      this.redisUserRepository.setSocket(user.id, 'game', null);
     }
-    this.sockets.set(socket.id, user.id);
-    this.userFactory.setSocket(user.id, 'game', socket);
+    this.redisUserRepository.setSocket(user.id, 'game', socket);
   }
 
   private async setUserInGame(user: UserModel, socket: Socket) {
@@ -411,8 +427,8 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
     await checkAchievementAndTitle(game);
     await patchUserStatesOutOfGame(game);
     this.sendGameEnd(game);
-    this.userFactory.deleteGameId(game.player1.id);
-    this.userFactory.deleteGameId(game.player2.id);
+    this.redisUserRepository.deleteGameId(game.player1.id);
+    this.redisUserRepository.deleteGameId(game.player2.id);
     this.gameFactory.delete(game.id);
   }
 

@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { GameFactory } from '../factory/game.factory';
 import { GameModel } from '../factory/model/game.model';
-import { UserFactory } from '../factory/user.factory';
 import { UserModel } from '../factory/model/user.model';
 import { PostGameDto } from './dto/post.game.dto';
 import { PostGameResponseDto } from './dto/post.game.response.dto';
@@ -9,11 +8,14 @@ import { QueueGateWay } from '../gateway/queue.gateway';
 import { Cron } from '@nestjs/schedule';
 import { GameGateWay } from '../gateway/game.gateway';
 import { patchUserStatesOutOfGame } from 'src/global/utils/socket.utils';
+import { RedisUserRepository } from '../redis/redis.user.repository';
+import { MutexManager } from '../mutex/mutex.manager';
 
 @Injectable()
 export class GameService {
   constructor(
-    private readonly userFactory: UserFactory,
+    private readonly redisUserRepository: RedisUserRepository,
+    private readonly mutexManager: MutexManager,
     private readonly gameFactory: GameFactory,
     private readonly queueGateway: QueueGateWay,
     private readonly gameGateway: GameGateWay,
@@ -21,15 +23,19 @@ export class GameService {
 
   async postGame(postDto: PostGameDto): Promise<PostGameResponseDto> {
     const { type, mode } = postDto;
-    await this.userFactory.setUserInfo(postDto.user1Id);
-    await this.userFactory.setUserInfo(postDto.user2Id);
-    const user1: UserModel = this.userFactory.findById(postDto.user1Id);
-    const user2: UserModel = this.userFactory.findById(postDto.user2Id);
+    await this.redisUserRepository.setUserInfo(postDto.user1Id);
+    await this.redisUserRepository.setUserInfo(postDto.user2Id);
+    const user1: UserModel = await this.redisUserRepository.findById(
+      postDto.user1Id,
+    );
+    const user2: UserModel = await this.redisUserRepository.findById(
+      postDto.user2Id,
+    );
     const gameId: string = this.gameFactory.create(
       new GameModel(user1, user2, type, mode),
     ).id;
-    this.userFactory.setGameId(user1.id, gameId);
-    this.userFactory.setGameId(user2.id, gameId);
+    await this.redisUserRepository.setGameId(user1.id, gameId);
+    await this.redisUserRepository.setGameId(user2.id, gameId);
     this.queueGateway.sendJoinGame(user1.id);
     this.queueGateway.sendJoinGame(user2.id);
     return { gameId };
@@ -45,8 +51,8 @@ export class GameService {
       ) {
         await patchUserStatesOutOfGame(game);
         this.gameGateway.exitGame(game);
-        this.userFactory.deleteGameId(game.player1.id);
-        this.userFactory.deleteGameId(game.player2.id);
+        await this.redisUserRepository.deleteGameId(game.player1.id);
+        await this.redisUserRepository.deleteGameId(game.player2.id);
         this.gameFactory.delete(game.id);
       }
     });
