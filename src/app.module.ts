@@ -15,6 +15,9 @@ import { UserModule } from './domain/user/user.module';
 import { User } from './domain/user/user.entity';
 import { UserRepository } from './domain/user/user.repository';
 import { GatewayModule } from './domain/gateway/gateway.module';
+import { RedisRepositoryModule } from './domain/redis/redis.repository.module';
+import { RedisModule } from '@nestjs-modules/ioredis';
+import { MutexModule } from './domain/mutex/mutex.module';
 
 @Module({
   imports: [
@@ -39,6 +42,15 @@ import { GatewayModule } from './domain/gateway/gateway.module';
     UserModule,
     GatewayModule,
     TypeOrmModule.forFeature([User]),
+    RedisRepositoryModule,
+    RedisModule.forRootAsync({
+      useFactory: () => ({
+        config: {
+          url: `${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`,
+        },
+      }),
+    }),
+    MutexModule,
   ],
   controllers: [AppController, UserController],
   providers: [AppService, UserRepository],
