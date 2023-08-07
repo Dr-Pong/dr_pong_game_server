@@ -1,4 +1,3 @@
-import { Socket } from 'socket.io';
 import { KeyManager } from 'src/domain/redis/util/redis.key.manager';
 import { User } from 'src/domain/user/user.entity';
 
@@ -8,8 +7,8 @@ export class UserModel {
   imgUrl: string;
   title: string;
   ladderPoint: number;
-  queueSocket: Socket;
-  gameSocket: Socket;
+  queueSocket: string;
+  gameSocket: string;
   gameId: string;
 
   static fromEntity(entity: User): UserModel {
