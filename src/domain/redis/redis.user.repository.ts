@@ -16,7 +16,7 @@ export class RedisUserRepository {
     const user: UserModel = JSON.parse(
       await this.redis.get(KeyManager.generateUserIdKey(userId)),
     );
-    return user;
+    return UserModel.fromRedis(user);
   }
 
   async findByNickname(nickname: string): Promise<UserModel> {
@@ -38,7 +38,8 @@ export class RedisUserRepository {
     socket: Socket,
   ): Promise<void> {
     const user: UserModel = await this.findById(userId);
-    user.socket[gatewayType] = socket;
+    if (gatewayType === 'queue') user.queueSocket = socket;
+    else if (gatewayType === 'game') user.gameSocket = socket;
     await this.redis.set(user.getRedisKeyId(), user.toString());
   }
 
@@ -68,7 +69,7 @@ export class RedisUserRepository {
   async deleteGameId(userId: number): Promise<void> {
     const user: UserModel = await this.findById(userId);
     user.gameId = null;
-    user.socket['game'] = null;
+    user.gameSocket = null;
     await this.redis.set(user.getRedisKeyId(), user.toString());
   }
 
@@ -93,8 +94,8 @@ export class RedisUserRepository {
         process.env.WEBSERVER_URL + '/users/' + nickname + '/detail',
       );
       return {
-        imgUrl: response.data.image.url,
-        title: response.data.title.title,
+        imgUrl: response.data?.image?.url ?? null,
+        title: response.data?.title?.title ?? null,
       };
     } catch (error) {
       console.log(error);

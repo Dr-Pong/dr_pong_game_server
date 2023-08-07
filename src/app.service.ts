@@ -15,7 +15,7 @@ export class AppService implements OnApplicationBootstrap {
     const users: User[] = await this.userRepository.findAll();
 
     for (const user of users) {
-      this.redisUserRepository.create(UserModel.fromEntity(user));
+      await this.redisUserRepository.create(UserModel.fromEntity(user));
     }
   }
 

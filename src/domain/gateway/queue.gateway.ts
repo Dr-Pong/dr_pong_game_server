@@ -35,8 +35,8 @@ export class QueueGateWay implements OnGatewayConnection, OnGatewayDisconnect {
       }
       console.log('join queue', user.nickname);
 
-      if (user.socket['queue']?.id !== socket.id) {
-        user.socket['queue']?.disconnect();
+      if (user.queueSocket.id !== socket.id) {
+        user.queueSocket.disconnect();
       }
       this.redisUserRepository.setSocket(user.id, 'queue', socket);
     } finally {
@@ -60,6 +60,6 @@ export class QueueGateWay implements OnGatewayConnection, OnGatewayDisconnect {
 
   async sendJoinGame(userId: number): Promise<void> {
     const user: UserModel = await this.redisUserRepository.findById(userId);
-    user.socket['queue']?.emit('matched', { roomId: user.gameId });
+    user.queueSocket?.emit('matched', { roomId: user.gameId });
   }
 }
