@@ -161,9 +161,9 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
     socket: Socket,
   ): Promise<void> {
     console.log('user connected', user.id, user.nickname);
-    if (user.gameSocket?.id !== socket.id) {
-      this.server.to(user.gameSocket?.id)?.emit('multiConnect', {});
-      this.server.in(user.gameSocket?.id)?.disconnectSockets();
+    if (user.gameSocket !== socket.id) {
+      this.server.to(user.gameSocket)?.emit('multiConnect', {});
+      this.server.in(user.gameSocket)?.disconnectSockets();
     }
     await this.redisUserRepository.setSocket(user.id, 'game', socket);
   }

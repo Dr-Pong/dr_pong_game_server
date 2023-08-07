@@ -38,8 +38,8 @@ export class RedisUserRepository {
     socket: Socket,
   ): Promise<void> {
     const user: UserModel = await this.findById(userId);
-    if (gatewayType === 'queue') user.queueSocket = socket;
-    else if (gatewayType === 'game') user.gameSocket = socket;
+    if (gatewayType === 'queue') user.queueSocket = socket.id;
+    else if (gatewayType === 'game') user.gameSocket = socket.id;
     await this.redis.set(user.getRedisKeyId(), user.toString());
   }
 
