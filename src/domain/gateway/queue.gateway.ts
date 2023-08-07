@@ -3,9 +3,10 @@ import {
   OnGatewayConnection,
   OnGatewayDisconnect,
   WebSocketGateway,
+  WebSocketServer,
 } from '@nestjs/websockets';
 import { QueueFactory } from '../factory/queue.factory';
-import { Socket } from 'socket.io';
+import { Server, Socket } from 'socket.io';
 import { UserModel } from '../factory/model/user.model';
 import { Mutex } from 'async-mutex';
 import { getUserFromSocket } from 'src/global/utils/socket.utils';
@@ -19,6 +20,8 @@ export class QueueGateWay implements OnGatewayConnection, OnGatewayDisconnect {
     private readonly queueFactory: QueueFactory,
     private readonly redisUserRepository: RedisUserRepository,
   ) {}
+  @WebSocketServer()
+  server: Server;
 
   async handleConnection(@ConnectedSocket() socket: Socket) {
     const mutex: Mutex = this.mutexManager.getMutex('queueSocket');
@@ -36,7 +39,7 @@ export class QueueGateWay implements OnGatewayConnection, OnGatewayDisconnect {
       console.log('join queue', user.nickname);
 
       if (user.queueSocket?.id !== socket.id) {
-        user.queueSocket.disconnect();
+        this.server.in(user.queueSocket.id).disconnectSockets();
       }
       this.redisUserRepository.setSocket(user.id, 'queue', socket);
     } finally {
@@ -60,6 +63,8 @@ export class QueueGateWay implements OnGatewayConnection, OnGatewayDisconnect {
 
   async sendJoinGame(userId: number): Promise<void> {
     const user: UserModel = await this.redisUserRepository.findById(userId);
-    user.queueSocket?.emit('matched', { roomId: user.gameId });
+    this.server
+      .to(user.queueSocket?.id)
+      ?.emit('matched', { roomId: user.gameId });
   }
 }

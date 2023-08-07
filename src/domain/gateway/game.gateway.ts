@@ -5,9 +5,10 @@ import {
   OnGatewayDisconnect,
   SubscribeMessage,
   WebSocketGateway,
+  WebSocketServer,
 } from '@nestjs/websockets';
 import { GameFactory } from '../factory/game.factory';
-import { Socket } from 'socket.io';
+import { Server, Socket } from 'socket.io';
 import { UserModel } from '../factory/model/user.model';
 import { GameModel } from '../factory/model/game.model';
 import { GamePlayerModel } from '../factory/model/game-player.model';
@@ -37,6 +38,8 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
     private readonly mutexManager: MutexManager,
     private readonly redisUserRepository: RedisUserRepository,
   ) {}
+  @WebSocketServer()
+  server: Server;
 
   async handleConnection(@ConnectedSocket() socket: Socket) {
     const mutex: Mutex = this.mutexManager.getMutex('gameSocket');
@@ -159,9 +162,8 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
   ): Promise<void> {
     console.log('user connected', user.id, user.nickname);
     if (user.gameSocket?.id !== socket.id) {
-      await user.gameSocket?.emit('multiConnect', {});
-      await user.gameSocket?.disconnect();
-      await this.redisUserRepository.setSocket(user.id, 'game', null);
+      this.server.to(user.gameSocket?.id)?.emit('multiConnect', {});
+      this.server.in(user.gameSocket?.id)?.disconnectSockets();
     }
     await this.redisUserRepository.setSocket(user.id, 'game', socket);
   }
