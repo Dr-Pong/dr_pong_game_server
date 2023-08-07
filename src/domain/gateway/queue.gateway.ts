@@ -35,7 +35,7 @@ export class QueueGateWay implements OnGatewayConnection, OnGatewayDisconnect {
       }
       console.log('join queue', user.nickname);
 
-      if (user.queueSocket.id !== socket.id) {
+      if (user.queueSocket?.id !== socket.id) {
         user.queueSocket.disconnect();
       }
       this.redisUserRepository.setSocket(user.id, 'queue', socket);
