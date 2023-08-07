@@ -9,11 +9,12 @@ import { User } from './user.entity';
 import { UserModel } from '../factory/model/user.model';
 import { PostGatewayUserDto } from './dto/post.gateway.users.dto';
 import { UserRepository } from './user.repository';
+import { RedisUserRepository } from '../redis/redis.user.repository';
 
 @Injectable()
 export class UserService {
   constructor(
-    private readonly userFactory: UserFactory,
+    private readonly redisUserRepository: RedisUserRepository,
     private readonly userRepository: UserRepository,
   ) {}
 
@@ -22,7 +23,7 @@ export class UserService {
     const user: User = await this.userRepository.save(postDto);
 
     runOnTransactionComplete(async () => {
-      this.userFactory.create(UserModel.fromEntity(user));
+      this.redisUserRepository.create(UserModel.fromEntity(user));
     });
   }
 }
