@@ -224,8 +224,8 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
     }
     this.move(game);
     await this.handleTouchEvent(game);
-    await this.handleGoal(game, game.ball);
     await this.sendPositionUpdate(game);
+    await this.handleGoal(game, game.ball);
     this.setPlayTime(game);
     setTimeout(() => {
       this.gameLoop(game);
