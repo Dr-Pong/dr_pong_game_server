@@ -303,9 +303,9 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   async handleGoal(game: GameModel, ball: Ball): Promise<void> {
-    const player1Win: boolean = ball.y - ball.size / 2 < 0;
+    const player1Win: boolean = ball.y + ball.size / 2 < 0;
 
-    const player2Win: boolean = ball.y + ball.size / 2 > game.board.height;
+    const player2Win: boolean = ball.y - ball.size / 2 > game.board.height;
 
     if (player1Win) {
       game.player1.score++;
