@@ -28,11 +28,10 @@ export class QueueService {
     this.checkUserIsInGame(userId, release);
 
     try {
+      await this.userFactory.setUserInfo(userId);
       if (type === GAMETYPE_LADDER) {
-        const userLp: number = await this.getUserLadderPointFromWebServer(
-          userId,
-        );
-        this.queueFactory.addLadderQueue(userId, userLp);
+        await this.userFactory.setLadderPoint(userId);
+        this.queueFactory.addLadderQueue(userId);
       } else {
         this.queueFactory.addNormalQueue(userId, mode);
       }
@@ -106,7 +105,6 @@ export class QueueService {
       const response = await axios.get(
         process.env.WEBSERVER_URL + '/users/' + userId + '/ranks/current',
       );
-      this.userFactory.setLadderPoint(userId, response.data.lp);
       return response.data.lp;
     } catch (error) {
       throw new BadRequestException('Error getting rank');

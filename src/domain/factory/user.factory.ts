@@ -1,7 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { UserModel } from './model/user.model';
-import { UserStatusType } from 'src/global/type/type.user.status';
 import { Socket } from 'socket.io';
+import axios from 'axios';
 
 @Injectable()
 export class UserFactory {
@@ -32,14 +32,54 @@ export class UserFactory {
     user.gameId = gameId;
   }
 
-  setLadderPoint(userId: number, ladderPoint: number): void {
+  async setLadderPoint(userId: number): Promise<void> {
     const user: UserModel = this.findById(userId);
+    const ladderPoint: number = await this.getUserLadderPointFromWebServer(
+      userId,
+    );
     user.ladderPoint = ladderPoint;
+  }
+
+  async setUserInfo(userId: number): Promise<void> {
+    const user: UserModel = this.findById(userId);
+    const userInfo = await this.getUserInfoFromWebServer(user.nickname);
+    user.imgUrl = userInfo?.imgUrl;
+    user.title = userInfo?.title;
   }
 
   deleteGameId(userId: number): void {
     const user: UserModel = this.findById(userId);
     user.gameId = null;
     user.socket['game'] = null;
+  }
+
+  private async getUserLadderPointFromWebServer(
+    userId: number,
+  ): Promise<number> {
+    try {
+      const response = await axios.get(
+        process.env.WEBSERVER_URL + '/users/' + userId + '/ranks/current',
+      );
+      return response.data.lp;
+    } catch (error) {
+      throw new BadRequestException('Error getting rank');
+    }
+  }
+
+  private async getUserInfoFromWebServer(
+    nickname: string,
+  ): Promise<{ imgUrl: string; title: string }> {
+    try {
+      const response = await axios.get(
+        process.env.WEBSERVER_URL + '/users/' + nickname + '/detail',
+      );
+      return {
+        imgUrl: response.data?.image.url,
+        title: response.data?.title?.title ?? null,
+      };
+    } catch (error) {
+      console.log(error);
+      return null;
+    }
   }
 }

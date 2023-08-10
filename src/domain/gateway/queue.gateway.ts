@@ -49,6 +49,6 @@ export class QueueGateWay implements OnGatewayConnection, OnGatewayDisconnect {
 
   async sendJoinGame(userId: number): Promise<void> {
     const user: UserModel = this.userFactory.findById(userId);
-    user.socket['queue']?.emit('joinGame', { roomId: user.gameId });
+    user.socket['queue']?.emit('matched', { roomId: user.gameId });
   }
 }
