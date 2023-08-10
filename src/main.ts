@@ -11,6 +11,11 @@ async function bootstrap() {
   const redisIoAdapter = new RedisIoAdapter(app);
   await redisIoAdapter.connectToRedis();
   app.useWebSocketAdapter(redisIoAdapter);
+  app.enableCors({
+    origin: [process.env.FRONTEND_URL, process.env.WEBSERVER_URL, process.env.CHATSERVER_URL, process.env.GATEWAY_URL],
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    credentials: true,
+  });
   await app.listen(4343);
 }
 bootstrap();
