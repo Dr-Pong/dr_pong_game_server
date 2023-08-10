@@ -416,14 +416,12 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
       game.player1.bar.direction === direction
     ) {
       game.player1.bar.stop();
-      game.player1.bar.speed = 70;
     }
     if (
       game.player2.id === userId &&
       game.player2.bar.direction !== direction
     ) {
       game.player2.bar.stop();
-      game.player2.bar.speed = 70;
     }
   }
 
