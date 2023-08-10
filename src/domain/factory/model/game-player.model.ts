@@ -13,7 +13,7 @@ export class GamePlayerModel {
   socket: Socket;
   isReady: boolean;
 
-  constructor(user: UserModel) {
+  constructor(user: UserModel, isReverse: boolean) {
     this.id = user.id;
     this.nickname = user.nickname;
     this.imgUrl = user.imgUrl;
@@ -24,6 +24,7 @@ export class GamePlayerModel {
       +process.env.BAR_SPEED,
       +process.env.BAR_WIDTH,
       +process.env.BOARD_WIDTH / 2,
+      isReverse,
     );
     this.isReady = false;
   }

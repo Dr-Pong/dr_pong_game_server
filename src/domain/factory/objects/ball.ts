@@ -82,6 +82,8 @@ export class Ball {
 
   touchBar(bar: Bar): void {
     this.direction.y *= -1;
+    if (bar.isReverse)
+      bar.direction = bar.direction === 'left' ? 'right' : 'left';
     if (bar.direction === 'left') {
       this.spinSpeed =
         this.spinSpeed +

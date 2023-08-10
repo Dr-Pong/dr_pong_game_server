@@ -103,7 +103,7 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
       socket.disconnect();
       return;
     }
-    this.stopBar(game.id, user.id, data.key);
+    this.stopBar(game, user.id, data.key);
   }
 
   @SubscribeMessage('myEmoji')
@@ -402,11 +402,10 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   async stopBar(
-    gameId: string,
+    game: GameModel,
     userId: number,
     direction: 'left' | 'right',
   ): Promise<void> {
-    const game: GameModel = this.gameFactory.findById(gameId);
     if (game.status !== 'playing') {
       return;
     }
