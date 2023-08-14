@@ -8,32 +8,33 @@ import { DeleteQueueDto } from './dto/delete.queue.dto';
 import { Cron } from '@nestjs/schedule';
 import { GameFactory } from '../factory/game.factory';
 import { QueueGateWay } from '../gateway/queue.gateway';
-import { UserFactory } from '../factory/user.factory';
-import axios from 'axios';
+import { RedisUserRepository } from '../redis/redis.user.repository';
+import { MutexManager } from '../mutex/mutex.manager';
 
 @Injectable()
 export class QueueService {
   constructor(
-    private readonly userFactory: UserFactory,
+    private readonly redisUserRepository: RedisUserRepository,
     private readonly gameFactory: GameFactory,
     private readonly queueFactory: QueueFactory,
     private readonly queueGateway: QueueGateWay,
+    private readonly mutexManager: MutexManager,
   ) {}
-  private mutex: Mutex = new Mutex();
 
   async postQueue(postDto: PostQueueDto): Promise<void> {
     const { userId, mode, type } = postDto;
-    const release = await this.mutex.acquire();
+    const mutex: Mutex = this.mutexManager.getMutex('queue');
+    const release = await mutex.acquire();
     this.checkUserInQueue(userId, release);
     this.checkUserIsInGame(userId, release);
 
     try {
-      await this.userFactory.setUserInfo(userId);
+      await this.redisUserRepository.setUserInfo(userId);
       if (type === GAMETYPE_LADDER) {
-        await this.userFactory.setLadderPoint(userId);
-        this.queueFactory.addLadderQueue(userId);
+        await this.redisUserRepository.setLadderPoint(userId);
+        await this.queueFactory.addLadderQueue(userId);
       } else {
-        this.queueFactory.addNormalQueue(userId, mode);
+        await this.queueFactory.addNormalQueue(userId, mode);
       }
     } finally {
       release();
@@ -42,8 +43,8 @@ export class QueueService {
 
   async deleteQueue(deleteDto: DeleteQueueDto): Promise<void> {
     const { userId } = deleteDto;
-
-    const release = await this.mutex.acquire();
+    const mutex: Mutex = this.mutexManager.getMutex('queue');
+    const release = await mutex.acquire();
 
     try {
       this.queueFactory.delete(userId);
@@ -54,33 +55,34 @@ export class QueueService {
 
   @Cron('0/3 * * * * *')
   async matching(): Promise<void> {
-    const release = await this.mutex.acquire();
+    const mutex: Mutex = this.mutexManager.getMutex('queue');
+    const release = await mutex.acquire();
     try {
       console.log('matching...');
-      this.processNormalQueue();
-      this.processLadderQueue();
+      await this.processNormalQueue();
+      await this.processLadderQueue();
     } finally {
       release();
     }
   }
 
-  private processNormalQueue(): void {
+  private async processNormalQueue(): Promise<void> {
     while (true) {
-      const newGame: GameModel = this.queueFactory.normalGameMatch();
+      const newGame: GameModel = await this.queueFactory.normalGameMatch();
       if (!newGame) break;
       this.gameFactory.create(newGame);
-      this.queueGateway.sendJoinGame(newGame.player1.id);
-      this.queueGateway.sendJoinGame(newGame.player2.id);
+      await this.queueGateway.sendJoinGame(newGame.player1.id);
+      await this.queueGateway.sendJoinGame(newGame.player2.id);
     }
   }
 
-  private processLadderQueue(): void {
+  private async processLadderQueue(): Promise<void> {
     while (true) {
-      const newGame: GameModel = this.queueFactory.ladderGameMatch();
+      const newGame: GameModel = await this.queueFactory.ladderGameMatch();
       if (!newGame) break;
       this.gameFactory.create(newGame);
-      this.queueGateway.sendJoinGame(newGame.player1.id);
-      this.queueGateway.sendJoinGame(newGame.player2.id);
+      await this.queueGateway.sendJoinGame(newGame.player1.id);
+      await this.queueGateway.sendJoinGame(newGame.player2.id);
     }
   }
 
@@ -91,23 +93,13 @@ export class QueueService {
     }
   }
 
-  private checkUserIsInGame(userId: number, release: () => void): void {
-    if (this.userFactory.findById(userId)?.gameId) {
+  private async checkUserIsInGame(
+    userId: number,
+    release: () => void,
+  ): Promise<void> {
+    if ((await this.redisUserRepository.findById(userId))?.gameId) {
       release();
       throw new BadRequestException('Already in game');
-    }
-  }
-
-  private async getUserLadderPointFromWebServer(
-    userId: number,
-  ): Promise<number> {
-    try {
-      const response = await axios.get(
-        process.env.WEBSERVER_URL + '/users/' + userId + '/ranks/current',
-      );
-      return response.data.lp;
-    } catch (error) {
-      throw new BadRequestException('Error getting rank');
     }
   }
 }

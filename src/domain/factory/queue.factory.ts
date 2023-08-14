@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { UserFactory } from './user.factory';
 import { UserModel } from './model/user.model';
 import { GAMEMODE_CLASSIC, GameMode } from 'src/global/type/type.game.mode';
 import { List } from 'src/global/utils/list';
@@ -13,33 +12,36 @@ import {
   GAMETYPE_LADDER,
   GAMETYPE_NORMAL,
 } from 'src/global/type/type.game.type';
+import { RedisUserRepository } from '../redis/redis.user.repository';
 
 @Injectable()
 export class QueueFactory {
   constructor(
-    private readonly userFactory: UserFactory,
+    private readonly redisUserRepository: RedisUserRepository,
     private readonly gameFactory: GameFactory,
   ) {}
   ladderQueue: LadderQueue = new LadderQueue();
   normalQueue: NormalQueue = new NormalQueue();
   static i = 0;
 
-  addLadderQueue(userId: number): void {
-    const user: UserModel = this.userFactory.findById(userId);
+  async addLadderQueue(userId: number): Promise<void> {
+    const user: UserModel = await this.redisUserRepository.findById(userId);
     this.ladderQueue.add(new LadderQueueUser(user.id, user.ladderPoint));
   }
 
-  addNormalQueue(userId: number, mode: GameMode): void {
-    const user: UserModel = this.userFactory.findById(userId);
+  async addNormalQueue(userId: number, mode: GameMode): Promise<void> {
+    const user: UserModel = await this.redisUserRepository.findById(userId);
     this.normalQueue.add(new NormalQueueUser(user, mode));
   }
 
-  normalGameMatch(): GameModel {
+  async normalGameMatch(): Promise<GameModel> {
     let tmp: List<NormalQueueUser> = this.normalQueue.head;
     while (this.normalQueue.size >= 2 && tmp?.data && tmp.next?.data) {
       if (tmp.data.gameMode === tmp.next?.data.gameMode) {
-        const user1: UserModel = this.userFactory.findById(tmp.data.userId);
-        const user2: UserModel = this.userFactory.findById(
+        const user1: UserModel = await this.redisUserRepository.findById(
+          tmp.data.userId,
+        );
+        const user2: UserModel = await this.redisUserRepository.findById(
           tmp.next.data.userId,
         );
         tmp = this.normalQueue.head;
@@ -49,8 +51,8 @@ export class QueueFactory {
         const game: GameModel = this.gameFactory.create(
           new GameModel(user1, user2, GAMETYPE_NORMAL, tmp.data.gameMode),
         );
-        this.userFactory.setGameId(user1.id, game.id);
-        this.userFactory.setGameId(user2.id, game.id);
+        await this.redisUserRepository.setGameId(user1.id, game.id);
+        await this.redisUserRepository.setGameId(user2.id, game.id);
         return game;
       }
       tmp = tmp.next;
@@ -58,12 +60,14 @@ export class QueueFactory {
     return null;
   }
 
-  ladderGameMatch(): GameModel {
+  async ladderGameMatch(): Promise<GameModel> {
     let tmp: List<LadderQueueUser> = this.ladderQueue.head;
     while (this.ladderQueue.size >= 2 && tmp?.data && tmp.next?.data) {
       if (isMatchableElo(tmp.data, tmp.next.data)) {
-        const user1: UserModel = this.userFactory.findById(tmp.data.userId);
-        const user2: UserModel = this.userFactory.findById(
+        const user1: UserModel = await this.redisUserRepository.findById(
+          tmp.data.userId,
+        );
+        const user2: UserModel = await this.redisUserRepository.findById(
           tmp.next.data.userId,
         );
         tmp = this.ladderQueue.head;
@@ -73,8 +77,8 @@ export class QueueFactory {
         const game: GameModel = this.gameFactory.create(
           new GameModel(user1, user2, GAMETYPE_LADDER, GAMEMODE_CLASSIC),
         );
-        this.userFactory.setGameId(user1.id, game.id);
-        this.userFactory.setGameId(user2.id, game.id);
+        await this.redisUserRepository.setGameId(user1.id, game.id);
+        await this.redisUserRepository.setGameId(user2.id, game.id);
         return game;
       } else tmp = tmp.next;
     }

@@ -3,17 +3,17 @@ import axios from 'axios';
 import { Socket } from 'socket.io';
 import { GameModel } from 'src/domain/factory/model/game.model';
 import { UserModel } from 'src/domain/factory/model/user.model';
-import { UserFactory } from 'src/domain/factory/user.factory';
 import { GameResultDto } from 'src/domain/game/dto/game.reulst.dto';
 import { PostGameRecordDto } from 'src/domain/game/dto/post.game.record.dto';
 import * as dotenv from 'dotenv';
+import { RedisUserRepository } from 'src/domain/redis/redis.user.repository';
 
 dotenv.config();
 
-export function getUserFromSocket(
+export async function getUserFromSocket(
   socket: Socket,
-  userFactory: UserFactory,
-): UserModel {
+  redisUserRepository: RedisUserRepository,
+): Promise<UserModel | null> {
   const jwtService: JwtService = new JwtService({
     secret: process.env.JWT_SECRET,
     signOptions: {
@@ -29,7 +29,7 @@ export function getUserFromSocket(
   try {
     const userToken = jwtService.verify(accesstoken);
     const userId = userToken?.id;
-    const user: UserModel = userFactory.findById(userId);
+    const user: UserModel = await redisUserRepository.findById(userId);
     return user;
   } catch (e) {
     console.log(accesstoken, e);

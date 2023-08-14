@@ -14,8 +14,14 @@ export class Bar {
   elasticity: number;
   // 마찰계수
   friction: number;
+  isReverse: boolean;
 
-  constructor(speed: number, width: number, position: number) {
+  constructor(
+    speed: number,
+    width: number,
+    position: number,
+    isReverse: boolean,
+  ) {
     this.speed = speed;
     this.width = width;
     this.position = position;
@@ -24,6 +30,7 @@ export class Bar {
     this.mode = 'normal';
     this.elasticity = 1;
     this.friction = randomInt(60, 100) / 30; // 0.5 ~ 1.5
+    this.isReverse = isReverse;
   }
 
   reset(): void {

@@ -82,7 +82,10 @@ export class Ball {
 
   touchBar(bar: Bar): void {
     this.direction.y *= -1;
-    if (bar.direction === 'left') {
+    let barDirection = bar.direction;
+    if (bar.isReverse)
+      barDirection = barDirection === 'left' ? 'right' : 'left';
+    if (barDirection === 'left') {
       this.spinSpeed =
         this.spinSpeed +
         ((bar.speed * bar.friction * bar.movedDistance) /
@@ -90,7 +93,7 @@ export class Ball {
           this.spinSpeed) /
           +process.env.GAME_FRAME;
     }
-    if (bar.direction === 'right') {
+    if (barDirection === 'right') {
       this.spinSpeed =
         this.spinSpeed -
         ((bar.speed * bar.friction * bar.movedDistance) /

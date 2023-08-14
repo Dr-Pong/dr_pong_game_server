@@ -37,8 +37,8 @@ export class GameModel {
     this.type = type;
     this.mode = mode;
     this.playTime = 0;
-    this.player1 = new GamePlayerModel(player1);
-    this.player2 = new GamePlayerModel(player2);
+    this.player1 = new GamePlayerModel(player1, false);
+    this.player2 = new GamePlayerModel(player2, true);
     this.board = new GameBoard(
       +process.env.BOARD_WIDTH,
       +process.env.BOARD_HEIGHT,

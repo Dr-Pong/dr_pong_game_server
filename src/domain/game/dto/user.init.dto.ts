@@ -1,4 +1,4 @@
-import { GamePlayerModel } from '../factory/model/game-player.model';
+import { GamePlayerModel } from '../../factory/model/game-player.model';
 
 export class UserInitDto {
   me: {

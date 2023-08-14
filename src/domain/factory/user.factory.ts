@@ -24,7 +24,7 @@ export class UserFactory {
 
   setSocket(userId: number, gatewayType: string, socket: Socket): void {
     const user: UserModel = this.findById(userId);
-    user.socket[gatewayType] = socket;
+    // user.socket[gatewayType] = socket;
   }
 
   setGameId(userId: number, gameId: string): void {
@@ -50,7 +50,7 @@ export class UserFactory {
   deleteGameId(userId: number): void {
     const user: UserModel = this.findById(userId);
     user.gameId = null;
-    user.socket['game'] = null;
+    // user.socket['game'] = null;
   }
 
   private async getUserLadderPointFromWebServer(
