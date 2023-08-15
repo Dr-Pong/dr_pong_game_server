@@ -7,14 +7,16 @@ WORKDIR /app
 # Copy package.json and package-lock.json
 COPY package*.json ./
 
+# Copy source code
+COPY . .
+
 # Install dependencies
 RUN npm install --force
 
-# Copy source code
-COPY . .
+RUN npm run build
 
 # Expose the desired port
 EXPOSE 4343
 
 # Run the servers
-CMD [ "npm", "run", "start" ]
+CMD [ "npm", "run", "start:prod" ]
