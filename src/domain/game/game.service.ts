@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { GameFactory } from '../factory/game.factory';
 import { GameModel } from '../factory/model/game.model';
 import { UserModel } from '../factory/model/user.model';
@@ -10,6 +10,8 @@ import { GameGateWay } from '../gateway/game.gateway';
 import { patchUserStatesOutOfGame } from 'src/global/utils/socket.utils';
 import { RedisUserRepository } from '../redis/redis.user.repository';
 import { MutexManager } from '../mutex/mutex.manager';
+import { QueueFactory } from '../factory/queue.factory';
+import { Mutex } from 'async-mutex';
 
 @Injectable()
 export class GameService {
@@ -18,27 +20,38 @@ export class GameService {
     private readonly mutexManager: MutexManager,
     private readonly gameFactory: GameFactory,
     private readonly queueGateway: QueueGateWay,
+    private readonly queueFactory: QueueFactory,
     private readonly gameGateway: GameGateWay,
   ) {}
 
   async postGame(postDto: PostGameDto): Promise<PostGameResponseDto> {
     const { type, mode } = postDto;
-    await this.redisUserRepository.setUserInfo(postDto.user1Id);
-    await this.redisUserRepository.setUserInfo(postDto.user2Id);
-    const user1: UserModel = await this.redisUserRepository.findById(
-      postDto.user1Id,
-    );
-    const user2: UserModel = await this.redisUserRepository.findById(
-      postDto.user2Id,
-    );
-    const gameId: string = this.gameFactory.create(
-      new GameModel(user1, user2, type, mode),
-    ).id;
-    await this.redisUserRepository.setGameId(user1.id, gameId);
-    await this.redisUserRepository.setGameId(user2.id, gameId);
-    this.queueGateway.sendJoinGame(user1.id);
-    this.queueGateway.sendJoinGame(user2.id);
-    return { gameId };
+    const mutex: Mutex = this.mutexManager.getMutex('queue');
+    const release = await mutex.acquire();
+    try {
+      await this.checkUserInQueue(postDto.user1Id, release);
+      await this.checkUserInQueue(postDto.user2Id, release);
+      await this.checkUserIsInGame(postDto.user1Id, release);
+      await this.checkUserIsInGame(postDto.user2Id, release);
+      await this.redisUserRepository.setUserInfo(postDto.user1Id);
+      await this.redisUserRepository.setUserInfo(postDto.user2Id);
+      const user1: UserModel = await this.redisUserRepository.findById(
+        postDto.user1Id,
+      );
+      const user2: UserModel = await this.redisUserRepository.findById(
+        postDto.user2Id,
+      );
+      const gameId: string = this.gameFactory.create(
+        new GameModel(user1, user2, type, mode),
+      ).id;
+      await this.redisUserRepository.setGameId(user1.id, gameId);
+      await this.redisUserRepository.setGameId(user2.id, gameId);
+      this.queueGateway.sendJoinGame(user1.id);
+      this.queueGateway.sendJoinGame(user2.id);
+      return { gameId };
+    } finally {
+      release();
+    }
   }
 
   @Cron('0/10 * * * * *')
@@ -56,5 +69,25 @@ export class GameService {
         this.gameFactory.delete(game.id);
       }
     });
+  }
+
+  private async checkUserInQueue(
+    userId: number,
+    release: () => void,
+  ): Promise<void> {
+    if (this.queueFactory.isIn(userId)) {
+      release();
+      throw new BadRequestException('Already in queue');
+    }
+  }
+
+  private async checkUserIsInGame(
+    userId: number,
+    release: () => void,
+  ): Promise<void> {
+    if ((await this.redisUserRepository.findById(userId))?.gameId) {
+      release();
+      throw new BadRequestException('Already in game');
+    }
   }
 }
