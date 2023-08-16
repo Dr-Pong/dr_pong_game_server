@@ -49,9 +49,6 @@ export class GameService {
       this.queueGateway.sendJoinGame(user1.id);
       this.queueGateway.sendJoinGame(user2.id);
       return { gameId };
-    } catch (error) {
-      release();
-      throw error;
     } finally {
       release();
     }
