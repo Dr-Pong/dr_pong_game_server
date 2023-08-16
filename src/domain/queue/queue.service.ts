@@ -25,8 +25,8 @@ export class QueueService {
     const { userId, mode, type } = postDto;
     const mutex: Mutex = this.mutexManager.getMutex('queue');
     const release = await mutex.acquire();
-    this.checkUserInQueue(userId, release);
-    this.checkUserIsInGame(userId, release);
+    await this.checkUserInQueue(userId, release);
+    await this.checkUserIsInGame(userId, release);
 
     try {
       await this.redisUserRepository.setUserInfo(userId);
@@ -86,7 +86,10 @@ export class QueueService {
     }
   }
 
-  private checkUserInQueue(userId: number, release: () => void): void {
+  private async checkUserInQueue(
+    userId: number,
+    release: () => void,
+  ): Promise<void> {
     if (this.queueFactory.isIn(userId)) {
       release();
       throw new BadRequestException('Already in queue');
