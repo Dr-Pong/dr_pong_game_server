@@ -23,7 +23,7 @@ export class UserService {
     const user: User = await this.userRepository.save(postDto);
 
     runOnTransactionComplete(async () => {
-      this.redisUserRepository.create(UserModel.fromEntity(user));
+      await this.redisUserRepository.create(UserModel.fromEntity(user));
     });
   }
 }
