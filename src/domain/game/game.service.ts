@@ -27,6 +27,7 @@ export class GameService {
   async postGame(postDto: PostGameDto): Promise<PostGameResponseDto> {
     const { type, mode } = postDto;
     const mutex: Mutex = this.mutexManager.getMutex('queue');
+    let gameId: string;
     const release = await mutex.acquire();
     try {
       await this.checkUserInQueue(postDto.user1Id, release);
@@ -41,17 +42,17 @@ export class GameService {
       const user2: UserModel = await this.redisUserRepository.findById(
         postDto.user2Id,
       );
-      const gameId: string = this.gameFactory.create(
+      gameId = this.gameFactory.create(
         new GameModel(user1, user2, type, mode),
       ).id;
       await this.redisUserRepository.setGameId(user1.id, gameId);
       await this.redisUserRepository.setGameId(user2.id, gameId);
       this.queueGateway.sendJoinGame(user1.id);
       this.queueGateway.sendJoinGame(user2.id);
-      return { gameId };
     } finally {
       release();
     }
+    return { gameId };
   }
 
   @Cron('0/10 * * * * *')

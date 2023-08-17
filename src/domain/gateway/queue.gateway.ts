@@ -43,7 +43,7 @@ export class QueueGateWay implements OnGatewayConnection, OnGatewayDisconnect {
         release();
         return;
       }
-      this.redisUserRepository.setSocket(user.id, 'queue', socket);
+      await this.redisUserRepository.setSocket(user.id, 'queue', socket);
     } finally {
       release();
     }
