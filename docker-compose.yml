@@ -1,0 +1,50 @@
+version: '3.8'
+services:
+  gameserver:
+    container_name: gameserver
+    build:
+      context: ./dr_pong_game_server
+      dockerfile: Dockerfile
+    ports:
+      - 4343:4343
+    networks:
+      - my-network
+    depends_on:
+      - game-db
+    env_file:
+      - ./.env
+    volumes:
+      - game-db-data:/var/lib/postgresql/data
+    environment:
+      - TYPEORM_HOST=game-db
+
+  game-db:
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: ${GAME_DB_USER}
+      POSTGRES_PASSWORD: ${GAME_DB_PASSWORD}
+      POSTGRES_DB: ${GAME_DB_NAME}
+    ports:
+      - 5435:5432
+    networks:
+      - my-network
+    volumes:
+      - game-db-data:/var/lib/postgresql/data
+
+  game-redis:
+    image: redis:latest
+    ports:
+      - 6379:6379
+    networks:
+      - my-network
+    volumes:
+      - game-redis-data:/data
+
+networks:
+  my-network:
+    name: my-network
+    driver: bridge
+
+volumes:
+  game-db-data:
+  game-redis-data:
