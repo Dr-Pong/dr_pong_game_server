@@ -3,7 +3,7 @@ services:
   gameserver:
     container_name: gameserver
     build:
-      context: ./dr_pong_game_server
+      context: ./
       dockerfile: Dockerfile
     ports:
       - 4343:4343
