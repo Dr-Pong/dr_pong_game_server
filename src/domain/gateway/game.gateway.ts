@@ -161,7 +161,7 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
     socket: Socket,
   ): Promise<void> {
     console.log('user connected', user.id, user.nickname);
-    if (user.gameSocket !== socket.id) {
+    if (user.gameSocket && user.gameSocket !== socket.id) {
       this.server.to(user.gameSocket)?.emit('multiConnect', {});
       this.server.in(user.gameSocket)?.disconnectSockets(true);
       return;
