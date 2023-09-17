@@ -26,6 +26,7 @@ export class GameModel {
   status: 'standby' | 'playing' | 'end';
   touchLog: GameLog[];
   pastBallPosition: { x: number; y: number }[];
+  frame: number;
 
   constructor(
     player1: UserModel,
@@ -49,5 +50,6 @@ export class GameModel {
     this.status = 'standby';
     this.touchLog = [];
     this.pastBallPosition = [];
+    this.frame = 0;
   }
 }
