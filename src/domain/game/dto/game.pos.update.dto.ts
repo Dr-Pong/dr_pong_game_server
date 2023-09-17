@@ -38,7 +38,7 @@ export class GamePosUpdateDto {
     const tempPlayer1Bar: Bar = game.player1.bar.copy();
     const tempPlayer2Bar: Bar = game.player2.bar.copy();
 
-    for (let i = 0; i < 20; i++) {
+    for (let i = 0; i < 10; i++) {
       const gameTime =
         +process.env.GAME_TIME -
         (game.playTime + (i * 1000) / +process.env.GAME_FRAME);
