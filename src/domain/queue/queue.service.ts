@@ -58,7 +58,6 @@ export class QueueService {
     const mutex: Mutex = this.mutexManager.getMutex('queue');
     const release = await mutex.acquire();
     try {
-      console.log('matching...');
       await this.processNormalQueue();
       await this.processLadderQueue();
     } finally {
