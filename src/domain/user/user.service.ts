@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { UserFactory } from '../factory/user.factory';
 import {
   IsolationLevel,
   Transactional,
