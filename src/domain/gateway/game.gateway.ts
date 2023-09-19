@@ -326,9 +326,15 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
     game.player2.socket?.emit('wallTouch', {});
   }
 
-  async sendTouchBarEvent(game: GameModel): Promise<void> {
-    game.player1.socket?.emit('barTouch', {});
-    game.player2.socket?.emit('barTouch', {});
+  async sendTouchBarEvent(bar: Bar, game: GameModel): Promise<void> {
+    if (bar.movedDistance !== 0) {
+      game.player1.socket?.emit('spin', {});
+      game.player2.socket?.emit('spin', {});
+      return;
+    } else {
+      game.player1.socket?.emit('barTouch', {});
+      game.player2.socket?.emit('barTouch', {});
+    }
   }
 
   sendPositionUpdate(game: GameModel): void {
@@ -473,6 +479,6 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
     if (game.mode === GAMEMODE_RANDOMBOUNCE) {
       ball.randomBounce();
     }
-    this.sendTouchBarEvent(game);
+    this.sendTouchBarEvent(bar, game);
   }
 }
