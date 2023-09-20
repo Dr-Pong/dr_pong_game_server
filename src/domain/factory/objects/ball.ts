@@ -53,7 +53,7 @@ export class Ball {
   reset(direction: number): void {
     this.x = +process.env.BOARD_WIDTH / 2;
     this.y = +process.env.BOARD_HEIGHT / 2;
-    this.direction = new Vector(-randomInt(0, 5), direction * randomInt(5, 10));
+    this.direction = new Vector(0, direction);
     this.direction = this.direction.normalize();
     this.spinSpeed = 0;
     this.speed = this.beginSpeed;
@@ -77,7 +77,31 @@ export class Ball {
   touchWall(): void {
     this.direction.x *= -1;
     this.spinSpeed *= this.elasticity;
-    // process.stdout.write('\u0007');
+    if (this.x < this.size / 2) {
+      this.setPosition(this.size / 2, this.y);
+    }
+    if (this.x > +process.env.BOARD_WIDTH - this.size / 2) {
+      this.setPosition(+process.env.BOARD_WIDTH - this.size / 2, this.y);
+    }
+  }
+
+  isTouchingBar(bar: Bar): boolean {
+    const barLeft: number = bar.position - bar.width / 2;
+    const barRight: number = bar.position + bar.width / 2;
+
+    // 위쪽과 아래쪽을 체크
+    if (bar.isReverse)
+      return (
+        this.y - this.size / 2 <= 1.5 / +process.env.BOARD_HEIGHT &&
+        this.x + this.size >= barLeft &&
+        this.x - this.size <= barRight
+      );
+    return (
+      this.y + this.size / 2 >=
+        +process.env.BOARD_HEIGHT - 1.5 / +process.env.BOARD_HEIGHT &&
+      this.x + this.size >= barLeft &&
+      this.x - this.size <= barRight
+    );
   }
 
   touchBar(bar: Bar): void {
@@ -104,6 +128,11 @@ export class Ball {
     this.speed *= this.elasticity * bar.elasticity;
     if (this.speed > +process.env.BALL_SPEED * 5)
       this.speed = +process.env.BALL_SPEED * 5;
+    if (this.y > +process.env.BOARD_HEIGHT - this.size / 2) {
+      this.setPosition(this.x, +process.env.BOARD_HEIGHT - this.size / 2);
+    } else if (this.y < this.size / 2) {
+      this.setPosition(this.x, this.size / 2);
+    }
   }
 
   randomBounce(): void {
@@ -117,6 +146,16 @@ export class Ball {
   }
 
   saveLog(): Ball {
+    const ball = new Ball(this.size, this.speed);
+    ball.x = this.x;
+    ball.y = this.y;
+    ball.direction = this.direction;
+    ball.spinSpeed = this.spinSpeed;
+    ball.elasticity = this.elasticity;
+    return ball;
+  }
+
+  copy(): Ball {
     const ball = new Ball(this.size, this.speed);
     ball.x = this.x;
     ball.y = this.y;

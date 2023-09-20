@@ -72,4 +72,17 @@ export class Bar {
       return;
     }
   }
+
+  copy(): Bar {
+    const bar: Bar = new Bar(
+      this.speed,
+      this.width,
+      this.position,
+      this.isReverse,
+    );
+    bar.direction = this.direction;
+    bar.movedDistance = this.movedDistance;
+    bar.mode = this.mode;
+    return bar;
+  }
 }

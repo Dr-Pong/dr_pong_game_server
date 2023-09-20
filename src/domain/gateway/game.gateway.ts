@@ -224,10 +224,11 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
       return;
     }
     this.move(game);
-    await this.handleTouchEvent(game);
-    await this.sendPositionUpdate(game);
+    this.handleTouchEvent(game);
+    if (game.frame % 2 === 0) this.sendPositionUpdate(game);
     await this.handleGoal(game, game.ball);
     this.setPlayTime(game);
+    game.frame++;
     setTimeout(() => {
       this.gameLoop(game);
     }, 1000 / +process.env.GAME_FRAME);
@@ -244,62 +245,29 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
     game.player2.bar.move();
   }
 
-  async handleTouchEvent(game: GameModel): Promise<void> {
-    await this.handleTouchBar(game, game.player1, game.ball);
-    await this.handleTouchBar(game, game.player2, game.ball);
-    await this.handleTouchWall(game, game.ball);
+  handleTouchEvent(game: GameModel): void {
+    this.handleTouchBar(game, game.player1, game.ball);
+    this.handleTouchBar(game, game.player2, game.ball);
+    this.handleTouchWall(game, game.ball);
   }
 
-  async handleTouchBar(
-    game: GameModel,
-    player: GamePlayerModel,
-    ball: Ball,
-  ): Promise<void> {
-    const bar: Bar = player.bar;
-
+  handleTouchBar(game: GameModel, player: GamePlayerModel, ball: Ball): void {
     // user2 바 체크
-    if (
-      player.id === game.player2.id &&
-      (await this.isBallTouchingBar(ball, bar, 1.5 / +process.env.BOARD_HEIGHT))
-    ) {
-      await this.handleBallTouchingBar(
-        game,
-        ball,
-        player,
-        1.5 / game.board.height + ball.size / 2,
-      );
-    }
-
-    //  user1 바 체크
-    if (
-      player.id === game.player1.id &&
-      (await this.isBallTouchingBar(
-        ball,
-        bar,
-        game.board.height - 1.5 / game.board.height,
-      ))
-    ) {
-      await this.handleBallTouchingBar(
-        game,
-        ball,
-        player,
-        game.board.height - 1.5 / game.board.height - ball.size / 2,
-      );
+    if (ball.isTouchingBar(player.bar)) {
+      this.handleBallTouchingBar(game, ball, player);
     }
   }
 
-  async handleTouchWall(game: GameModel, ball: Ball): Promise<void> {
+  handleTouchWall(game: GameModel, ball: Ball): void {
     // 왼쪽 벽 체크
     if (ball.x - ball.size / 2 <= 0) {
       ball.touchWall();
-      ball.setPosition(ball.size / 2, ball.y);
-      await this.sendTouchWallEvent(game);
+      this.sendTouchWallEvent(game);
     }
     // 오른쪽 벽 체크
     if (ball.x + ball.size / 2 >= game.board.width) {
       ball.touchWall();
-      ball.setPosition(game.board.width - ball.size / 2, ball.y);
-      await this.sendTouchWallEvent(game);
+      this.sendTouchWallEvent(game);
     }
   }
 
@@ -325,7 +293,7 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
       game.round++;
       this.sendRoundUpdate(game);
     }
-    if (await this.checkGameEnd(game)) {
+    if (this.checkGameEnd(game)) {
       await this.endGame(game);
       return;
     }
@@ -335,7 +303,7 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
-  async checkGameEnd(game: GameModel): Promise<boolean> {
+  checkGameEnd(game: GameModel): boolean {
     return (
       game.player1.score === +process.env.GAME_FINISH_SCORE ||
       game.player2.score === +process.env.GAME_FINISH_SCORE ||
@@ -353,17 +321,23 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
     game.status = 'playing';
   }
 
-  async sendTouchWallEvent(game: GameModel): Promise<void> {
+  sendTouchWallEvent(game: GameModel): void {
     game.player1.socket?.emit('wallTouch', {});
     game.player2.socket?.emit('wallTouch', {});
   }
 
-  async sendTouchBarEvent(game: GameModel): Promise<void> {
-    game.player1.socket?.emit('barTouch', {});
-    game.player2.socket?.emit('barTouch', {});
+  async sendTouchBarEvent(bar: Bar, game: GameModel): Promise<void> {
+    if (bar.movedDistance !== 0) {
+      game.player1.socket?.emit('spin', {});
+      game.player2.socket?.emit('spin', {});
+      return;
+    } else {
+      game.player1.socket?.emit('barTouch', {});
+      game.player2.socket?.emit('barTouch', {});
+    }
   }
 
-  async sendPositionUpdate(game: GameModel): Promise<void> {
+  sendPositionUpdate(game: GameModel): void {
     game.player1.socket?.emit(
       'posUpdate',
       new GamePosUpdateDto(game, game.player1.id),
@@ -475,41 +449,36 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
     });
   }
 
-  private async isBallTouchingBar(
-    ball: Ball,
-    bar: Bar,
-    yPosition: number,
-  ): Promise<boolean> {
+  private isBallTouchingBar(ball: Ball, bar: Bar): boolean {
     const barLeft: number = bar.position - bar.width / 2;
     const barRight: number = bar.position + bar.width / 2;
 
     // 위쪽과 아래쪽을 체크
-    if (yPosition === 1.5 / +process.env.BOARD_HEIGHT)
+    if (bar.isReverse)
       return (
-        ball.y - ball.size / 2 <= yPosition &&
+        ball.y - ball.size / 2 <= 1.5 / +process.env.BOARD_HEIGHT &&
         ball.x + ball.size >= barLeft &&
         ball.x - ball.size <= barRight
       );
     return (
-      ball.y + ball.size / 2 >= yPosition &&
+      ball.y + ball.size / 2 >=
+        +process.env.BOARD_HEIGHT - 1.5 / +process.env.BOARD_HEIGHT &&
       ball.x + ball.size >= barLeft &&
       ball.x - ball.size <= barRight
     );
   }
 
-  private async handleBallTouchingBar(
+  private handleBallTouchingBar(
     game: GameModel,
     ball: Ball,
     player: GamePlayerModel,
-    yPosition: number,
-  ): Promise<void> {
+  ): void {
     const bar: Bar = player.bar;
     game.touchLog.push(new GameLog(player.id, game.round, 'touch', ball));
     ball.touchBar(bar);
     if (game.mode === GAMEMODE_RANDOMBOUNCE) {
       ball.randomBounce();
     }
-    ball.setPosition(ball.x, yPosition);
-    await this.sendTouchBarEvent(game);
+    this.sendTouchBarEvent(bar, game);
   }
 }

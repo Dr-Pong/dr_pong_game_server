@@ -57,7 +57,6 @@ export class GameService {
 
   @Cron('0/10 * * * * *')
   async cleanUpUnmatchedGames(): Promise<void> {
-    console.log('matching...');
     this.gameFactory.games.forEach(async (game) => {
       if (
         game.status === 'standby' &&

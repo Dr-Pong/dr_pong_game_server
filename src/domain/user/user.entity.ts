@@ -8,7 +8,4 @@ export class User extends BaseTimeEntity {
 
   @Column({ name: 'nickname' })
   nickname: string;
-
-  @Column({ name: 'ladder_point' })
-  ladderPoint: number;
 }
