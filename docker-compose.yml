@@ -60,3 +60,8 @@ networks:
 volumes:
   game-db-data:
   game-redis-data:
+  cert_volume:
+    driver_opts:
+      type: none
+      o: 'bind'
+      device: '${HOME}/certs'
