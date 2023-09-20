@@ -40,6 +40,18 @@ services:
     volumes:
       - game-redis-data:/data
 
+  nginx:
+    image: nginx
+    build:
+      context: ./nginx
+    restart: always
+    ports:
+      - 443:443
+      - 80:80
+      # - 3000:3000
+    volumes:
+      - cert_volume: /ect/letsencrypt
+
 networks:
   my-network:
     name: my-network
