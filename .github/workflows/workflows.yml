@@ -94,6 +94,7 @@ jobs:
         run: docker-compose up -d
 
       - run: mkdir -p /var/lib/docker/volumes/dr_pong_game_server_cert_volume/_data
+      - run: mkdir -p /${HOME}/cert
 
       
       # - name: Test 
