@@ -6,7 +6,7 @@ services:
       context: ./
       dockerfile: Dockerfile
     ports:
-      - 4343:4343
+      - 3000:3000
     networks:
       - my-network
     depends_on:
@@ -50,7 +50,7 @@ services:
       - 80:80
       # - 3000:3000
     volumes:
-      - cert_volume: /ect/letsencrypt
+      - cert_volume:/ect/letsencrypt
 
 networks:
   my-network:
