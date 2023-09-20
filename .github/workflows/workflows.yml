@@ -87,14 +87,15 @@ jobs:
           echo "CRYPTO_SECRET_IV=${{ secrets.CRYPTO_SECRET_IV }}" >> .env
           echo "CRYPTO_SECRET_KEY=${{ secrets.CRYPTO_SECRET_KEY }}" >> .env
 
+
+      - run: mkdir -p /var/lib/docker/volumes/dr_pong_game_server_cert_volume/_data
+      - run: mkdir -p /${HOME}/cert
+
       - name: Build Docker Image
         run: docker-compose build
       
       - name: Run Docker Container
         run: docker-compose up -d
-
-      - run: mkdir -p /var/lib/docker/volumes/dr_pong_game_server_cert_volume/_data
-      - run: mkdir -p /${HOME}/cert
 
       
       # - name: Test 
