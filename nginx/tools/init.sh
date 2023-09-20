@@ -5,7 +5,7 @@ if [ ! -e /etc/letsencrypt/live/drpong.co/fullchain.pem ];then
   nginx -s quit
   nginx
   mkdir -p /var/www/certbot
-  certbot --webroot certonly -w /var/www/certbot --agree-tos --email studionocheong@gmail.com -d api.drpong.co --test-cert
+  certbot --webroot certonly -w /var/www/certbot --agree-tos --email studionocheong@gmail.com -d game.drpong.co --test-cert
   cp /drpong.conf /etc/nginx/conf.d/default.conf
   nginx -s quit
 else
