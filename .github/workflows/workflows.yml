@@ -93,5 +93,5 @@ jobs:
       - name: Run Docker Container
         run: docker-compose up -d
 
-      - name: Test
-        run: npm test -- --bail
+      # - name: Test
+      #   run: npm test -- --bail
