@@ -8,3 +8,4 @@ COPY tools/init.sh ./init.sh
 RUN chmod +x ./init.sh
 
 ENTRYPOINT ["/usr/bin/dumb-init","--"]
+CMD ["sh", "./init.sh"]
