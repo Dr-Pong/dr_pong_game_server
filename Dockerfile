@@ -16,7 +16,7 @@ RUN npm install --force
 RUN npm run build
 
 # Expose the desired port
-EXPOSE 4343
+EXPOSE 3000
 
 # Run the servers
 CMD [ "npm", "run", "start:prod" ]

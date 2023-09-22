@@ -6,7 +6,7 @@ services:
       context: ./
       dockerfile: Dockerfile
     ports:
-      - 4343:4343
+      - 3000:3000
     networks:
       - my-network
     depends_on:
@@ -40,6 +40,18 @@ services:
     volumes:
       - game-redis-data:/data
 
+  nginx:
+    image: nginx
+    build:
+      context: ./nginx
+    restart: always
+    ports:
+      - 443:443
+      - 80:80
+      # - 3000:3000
+    volumes:
+      - cert_volume:/etc/letsencrypt/
+
 networks:
   my-network:
     name: my-network
@@ -48,3 +60,8 @@ networks:
 volumes:
   game-db-data:
   game-redis-data:
+  cert_volume:
+    driver_opts:
+      type: none
+      o: 'bind'
+      device: '${HOME}/certs'
