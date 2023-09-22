@@ -2,6 +2,7 @@ import { GameModel } from 'src/domain/factory/model/game.model';
 import * as dotenv from 'dotenv';
 import { Ball } from 'src/domain/factory/objects/ball';
 import { Bar } from 'src/domain/factory/objects/bar';
+import { GAMEMODE_RANDOMBOUNCE } from 'src/global/type/type.game.mode';
 
 dotenv.config();
 
@@ -74,10 +75,16 @@ export class GamePosUpdateDto {
       if (tempBall.x - tempBall.size / 2 <= 0) tempBall.touchWall();
       if (tempBall.x + tempBall.size / 2 >= game.board.width)
         tempBall.touchWall();
-      if (tempBall.isTouchingBar(tempPlayer1Bar))
+      if (tempBall.isTouchingBar(tempPlayer1Bar)) {
+        if (game.mode === GAMEMODE_RANDOMBOUNCE)
+          tempBall.randomBounce(game.randomSeed[game.seedIndex + i]);
         tempBall.touchBar(tempPlayer1Bar);
-      if (tempBall.isTouchingBar(tempPlayer2Bar))
+      }
+      if (tempBall.isTouchingBar(tempPlayer2Bar)) {
+        if (game.mode === GAMEMODE_RANDOMBOUNCE)
+          tempBall.randomBounce(game.randomSeed[game.seedIndex + i]);
         tempBall.touchBar(tempPlayer2Bar);
+      }
     }
   }
 }
