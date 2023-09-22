@@ -45,7 +45,7 @@ export class GameModel {
     this.mode = mode;
     if (mode === GAMEMODE_RANDOMBOUNCE) {
       this.randomSeed = [];
-      for (let i = 0; i < 1000; i++) {
+      for (let i = 0; i < 300; i++) {
         this.randomSeed.push(randomInt(-5, 5));
       }
     }
