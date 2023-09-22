@@ -135,8 +135,8 @@ export class Ball {
     }
   }
 
-  randomBounce(): void {
-    this.direction.x = new Vector(randomInt(-5, 5), 1).normalize().x;
+  randomBounce(vector: number): void {
+    this.direction.x = new Vector(vector, 1).normalize().x;
     this.direction.normalize();
   }
 
