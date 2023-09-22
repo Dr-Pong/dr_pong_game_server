@@ -77,12 +77,12 @@ export class GamePosUpdateDto {
         tempBall.touchWall();
       if (tempBall.isTouchingBar(tempPlayer1Bar)) {
         if (game.mode === GAMEMODE_RANDOMBOUNCE)
-          tempBall.randomBounce(game.randomSeed[game.seedIndex + i]);
+          tempBall.randomBounce(game.randomSeed[(game.seedIndex + i) % 300]);
         tempBall.touchBar(tempPlayer1Bar);
       }
       if (tempBall.isTouchingBar(tempPlayer2Bar)) {
         if (game.mode === GAMEMODE_RANDOMBOUNCE)
-          tempBall.randomBounce(game.randomSeed[game.seedIndex + i]);
+          tempBall.randomBounce(game.randomSeed[(game.seedIndex + i) % 300]);
         tempBall.touchBar(tempPlayer2Bar);
       }
     }
