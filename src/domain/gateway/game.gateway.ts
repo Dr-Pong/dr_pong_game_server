@@ -477,7 +477,7 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
     game.touchLog.push(new GameLog(player.id, game.round, 'touch', ball));
     ball.touchBar(bar);
     if (game.mode === GAMEMODE_RANDOMBOUNCE) {
-      ball.randomBounce(game.randomSeed[(game.seedIndex + i) % 300]);
+      ball.randomBounce(game.randomSeed[(game.seedIndex) % 300]);
       game.seedIndex++;
     }
     this.sendTouchBarEvent(bar, game);
