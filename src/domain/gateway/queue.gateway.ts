@@ -32,12 +32,10 @@ export class QueueGateWay implements OnGatewayConnection, OnGatewayDisconnect {
         this.redisUserRepository,
       );
       if (!user) {
-        console.log('user not found');
         socket.disconnect();
         release();
         return;
       }
-      console.log('join queue', user.nickname);
 
       if (user.queueSocket && user.queueSocket !== socket.id) {
         this.server.in(user.queueSocket).disconnectSockets(true);
@@ -56,7 +54,6 @@ export class QueueGateWay implements OnGatewayConnection, OnGatewayDisconnect {
       this.redisUserRepository,
     );
     if (!user) {
-      console.log('user not found');
       socket.disconnect();
       return;
     }
