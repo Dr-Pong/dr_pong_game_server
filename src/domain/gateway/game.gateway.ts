@@ -50,7 +50,6 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
         this.redisUserRepository,
       );
       if (!user) {
-        console.log('user not found', socket.id);
         socket.disconnect();
         return;
       }
@@ -61,7 +60,7 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   handleDisconnect(@ConnectedSocket() socket: Socket) {
-    console.log('disconnect', socket.id);
+    // console.log('disconnect', socket.id);
   }
 
   @SubscribeMessage('keyPress')
@@ -141,26 +140,34 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
     @ConnectedSocket() socket: Socket,
     @MessageBody() data: { roomId: string },
   ): Promise<void> {
-    const user: UserModel = await getUserFromSocket(
-      socket,
-      this.redisUserRepository,
-    );
-    if (!user || user.gameId !== data?.roomId) {
-      socket?.emit('invalidGameId', {});
-      socket.disconnect();
-      return;
+    const mutex: Mutex = this.mutexManager.getMutex('joinGame');
+    const release = await mutex.acquire();
+    try {
+      const user: UserModel = await getUserFromSocket(
+        socket,
+        this.redisUserRepository,
+      );
+      if (!user || user.gameId !== data?.roomId) {
+        socket?.emit('invalidGameId', {});
+        socket.disconnect();
+        return;
+      }
+      const game: GameModel = this.gameFactory.findById(user.gameId);
+      this.setUserIsReady(user.id, game, true);
+      this.setUserInGame(user, socket);
+      if (game.status === 'standby') {
+        await this.start(game);
+      }
+      await patchUserStatesInGame(game, user);
+    } finally {
+      release();
     }
-    const game: GameModel = this.gameFactory.findById(user.gameId);
-    await patchUserStatesInGame(game, user);
-    this.setUserIsReady(user.id, user.gameId, true);
-    await this.setUserInGame(user, socket);
   }
 
   private async setUserInFactory(
     user: UserModel,
     socket: Socket,
   ): Promise<void> {
-    console.log('user connected', user.id, user.nickname);
     if (user.gameSocket && user.gameSocket !== socket.id) {
       this.server.to(user.gameSocket)?.emit('multiConnect', {});
       this.server.in(user.gameSocket)?.disconnectSockets(true);
@@ -169,7 +176,7 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
     await this.redisUserRepository.setSocket(user.id, 'game', socket);
   }
 
-  private async setUserInGame(user: UserModel, socket: Socket) {
+  private setUserInGame(user: UserModel, socket: Socket) {
     const game: GameModel = this.gameFactory.findById(user.gameId);
     if (game.player1.id === user.id) {
       game.player1.socket = socket;
@@ -177,12 +184,9 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
       game.player2.socket = socket;
     }
     this.sendGameInfo(user, game);
-    if (game.status === 'standby') {
-      this.start(game.id);
-    }
   }
 
-  private async sendGameInfo(user: UserModel, game: GameModel): Promise<void> {
+  private sendGameInfo(user: UserModel, game: GameModel): void {
     const gamePlayer: GamePlayerModel =
       game.player1.id === user.id ? game.player1 : game.player2;
     const opponent: GamePlayerModel =
@@ -192,11 +196,7 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
     gamePlayer.socket?.emit('gameInit', new GameInitDto(game, user));
   }
 
-  setUserIsReady(userId: number, gameId: string, isReady: boolean): void {
-    const game: GameModel = this.gameFactory.findById(gameId);
-    if (!game) {
-      return;
-    }
+  setUserIsReady(userId: number, game: GameModel, isReady: boolean): void {
     if (game.player1.id === userId) {
       game.player1.isReady = isReady;
     }
@@ -205,8 +205,7 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
-  async start(gameId: string): Promise<void> {
-    const game: GameModel = this.gameFactory.findById(gameId);
+  async start(game: GameModel): Promise<void> {
     if (!game.player1.isReady || !game.player2.isReady) {
       return;
     }
@@ -449,25 +448,6 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
     });
   }
 
-  private isBallTouchingBar(ball: Ball, bar: Bar): boolean {
-    const barLeft: number = bar.position - bar.width / 2;
-    const barRight: number = bar.position + bar.width / 2;
-
-    // 위쪽과 아래쪽을 체크
-    if (bar.isReverse)
-      return (
-        ball.y - ball.size / 2 <= 1.5 / +process.env.BOARD_HEIGHT &&
-        ball.x + ball.size >= barLeft &&
-        ball.x - ball.size <= barRight
-      );
-    return (
-      ball.y + ball.size / 2 >=
-        +process.env.BOARD_HEIGHT - 1.5 / +process.env.BOARD_HEIGHT &&
-      ball.x + ball.size >= barLeft &&
-      ball.x - ball.size <= barRight
-    );
-  }
-
   private handleBallTouchingBar(
     game: GameModel,
     ball: Ball,
@@ -477,7 +457,7 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
     game.touchLog.push(new GameLog(player.id, game.round, 'touch', ball));
     ball.touchBar(bar);
     if (game.mode === GAMEMODE_RANDOMBOUNCE) {
-      ball.randomBounce(game.randomSeed[(game.seedIndex) % 300]);
+      ball.randomBounce(game.randomSeed[game.seedIndex]);
       game.seedIndex++;
     }
     this.sendTouchBarEvent(bar, game);
