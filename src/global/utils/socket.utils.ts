@@ -23,7 +23,6 @@ export async function getUserFromSocket(
 
   const accesstoken = socket.handshake.auth?.Authorization?.split(' ')[1];
   if (!accesstoken) {
-    console.log('no token', socket.id);
     return null;
   }
   try {
@@ -32,7 +31,6 @@ export async function getUserFromSocket(
     const user: UserModel = await redisUserRepository.findById(userId);
     return user;
   } catch (e) {
-    console.log(accesstoken, e);
     return null;
   }
 }
@@ -47,27 +45,21 @@ export async function checkAchievementAndTitle(game: GameModel): Promise<void> {
       )
     ).data;
     for (const title of result?.title) {
-      console.log('title to player');
       if (title.userId === game.player1.id) {
-        console.log('player1 title');
         game.player1.socket?.emit('title', { title: title.title });
       }
       if (title.userId === game.player2.id) {
-        console.log('player2 title');
         game.player2.socket?.emit('title', { title: title.title });
       }
     }
     for (const achievement of result?.achievement) {
-      console.log('achievement to player');
       if (achievement.userId === game.player1.id) {
-        console.log('player1');
         game.player1.socket?.emit('achievement', {
           name: achievement.achievement,
           imgUrl: achievement.imgUrl,
         });
       }
       if (achievement.userId === game.player2.id) {
-        console.log('player2');
         game.player2.socket?.emit('achievement', {
           achievement: achievement.achievement,
           imgUrl: achievement.imgUrl,
