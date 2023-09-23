@@ -10,26 +10,11 @@ services:
     networks:
       - my-network
     depends_on:
-      - game-db
+      - game-redis
     env_file:
       - ./.env
-    volumes:
-      - game-db-data:/var/lib/postgresql/data
     environment:
-      - TYPEORM_HOST=game-db
-
-  game-db:
-    image: postgres:latest
-    environment:
-      POSTGRES_USER: ${GAME_DB_USER}
-      POSTGRES_PASSWORD: ${GAME_DB_PASSWORD}
-      POSTGRES_DB: ${GAME_DB_NAME}
-    ports:
-      - 5435:5432
-    networks:
-      - my-network
-    volumes:
-      - game-db-data:/var/lib/postgresql/data
+      - TZ=Asia/Seoul
 
   game-redis:
     image: redis:latest
@@ -48,7 +33,6 @@ services:
     ports:
       - 443:443
       - 80:80
-      # - 3000:3000
     volumes:
       - cert_volume:/etc/letsencrypt/
 
@@ -58,7 +42,6 @@ networks:
     driver: bridge
 
 volumes:
-  game-db-data:
   game-redis-data:
   cert_volume:
     driver_opts:
