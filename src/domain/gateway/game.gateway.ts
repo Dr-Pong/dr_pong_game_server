@@ -32,7 +32,7 @@ import { RedisUserRepository } from '../redis/redis.user.repository';
 import { MutexManager } from '../mutex/mutex.manager';
 
 @WebSocketGateway({ namespace: 'game' })
-export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
+export class GameGateWay implements OnGatewayConnection {
   constructor(
     private readonly gameFactory: GameFactory,
     private readonly mutexManager: MutexManager,
@@ -57,10 +57,6 @@ export class GameGateWay implements OnGatewayConnection, OnGatewayDisconnect {
     } finally {
       release();
     }
-  }
-
-  handleDisconnect(@ConnectedSocket() socket: Socket) {
-    // console.log('disconnect', socket.id);
   }
 
   @SubscribeMessage('keyPress')
