@@ -91,7 +91,7 @@ jobs:
         run: docker-compose build
 
       - name: Run Docker Container
-        run: docker-compose up -d gameserver game-db game-redis
+        run: docker-compose up -d gameserver game-redis
 
       # - name: Test
       #   run: npm test -- --bail
